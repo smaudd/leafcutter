@@ -1,0 +1,2 @@
+document.getElementById("drag1").ondragstart=t=>{t.preventDefault(),window.electron.startDrag(t.currentTarget.dataset.url)};document.getElementById("drag2").ondragstart=t=>{t.preventDefault(),window.electron.startDrag(t.currentTarget.dataset.url)};window.download=async t=>{try{const r=await(await fetch(t)).arrayBuffer();console.log(r),window.electron.blob(r)}catch(e){console.log("ERRRO!",e)}};
+//# sourceMappingURL=renderer.js.map

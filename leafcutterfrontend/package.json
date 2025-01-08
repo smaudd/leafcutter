@@ -1,0 +1,17 @@
+{
+  "name": "leafcutterfrontend",
+  "version": "1.0.0",
+  "description": "",
+  "main": "vite.config.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "vite",
+    "build": "vite build"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "vite": "^6.0.7"
+  }
+}
