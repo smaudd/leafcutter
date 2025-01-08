@@ -7,6 +7,7 @@ const {
 } = require("electron");
 const path = require("path");
 const fs = require("fs");
+const directory = require("./services/directory")();
 // const started = require("electron-squirrel-startup");
 
 // import { updateElectronApp, UpdateSourceType } from "update-electron-app";
@@ -44,7 +45,6 @@ const downloadFile = (url, dest) => {
 
 ipcMain.on("ondragstart", async (event, fileUrl) => {
   // download and save to tmp folder
-  console.log(fileUrl);
   const fileName = fileUrl.split("/").pop();
   const filePath = path.join(app.getPath("temp"), fileName);
   await downloadFile(fileUrl, filePath);
@@ -56,6 +56,72 @@ ipcMain.on("ondragstart", async (event, fileUrl) => {
 });
 
 ipcMain.on("ondragend", async (event, fileUrl) => {});
+
+ipcMain.handle(
+  "get-directory-index",
+  async (event, path = "", kind = "sample") => {
+    // const savedData = directory.read(path);
+    // if (savedData) {
+    //   return savedData;
+    // }
+    // Perform some action, e.g., fetching data from an API
+    console.log("Getting directory index:", path);
+    const response = await fetch(
+      `https://couponsb.fra1.digitaloceanspaces.com/${path}`
+    );
+    const data = await response.json();
+    console.log("Requested directory index:", path, data);
+    // directory.savePath(path, data);
+    return { content: data }; // This will be sent back to the renderer process
+  }
+);
+
+ipcMain.handle("get-file", async (event, pathname = "") => {
+  try {
+    const filePath = path.join(app.getPath("userData"), pathname);
+
+    // Check if the file already exists
+    if (fs.existsSync(filePath)) {
+      const fileBuffer = await fs.promises.readFile(filePath);
+      return fileBuffer.buffer; // Return ArrayBuffer
+    }
+
+    // Fetch data from the API
+    const response = await fetch(
+      `https://couponsb.fra1.digitaloceanspaces.com/${pathname}`
+    );
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch file: ${response.statusText}`);
+    }
+
+    const data = await response.arrayBuffer();
+    console.log("Data fetched from API, size:", data.byteLength);
+
+    // Save file on disk
+    const dir = path.dirname(filePath);
+    await fs.promises.mkdir(dir, { recursive: true });
+    await fs.promises.writeFile(filePath, Buffer.from(data));
+    console.log("File saved to disk:", filePath);
+
+    return data; // Return ArrayBuffer
+  } catch (error) {
+    console.error("Error in get-file:", error);
+    throw error; // Ensure error propagates back to the renderer process
+  }
+});
+
+ipcMain.handle("clear-directory-state", async (event, path = "") => {
+  directory.del();
+});
+
+ipcMain.handle("get-directory-state", async (event, path = "") => {
+  return {};
+});
+
+ipcMain.on("sync-directory-state", async (event, data) => {
+  directory.save(data);
+});
 
 const createWindow = () => {
   // Create the browser window.

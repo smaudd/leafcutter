@@ -1,0 +1,9 @@
+.container {
+  user-select: none;
+}
+
+.canvas {
+  width: 100%;
+  display: flex;
+  max-width: 500px;
+}

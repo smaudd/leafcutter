@@ -15,4 +15,11 @@ contextBridge.exposeInMainWorld("versions", {
 contextBridge.exposeInMainWorld("electron", {
   startDrag: (fileName) => ipcRenderer.send("ondragstart", fileName),
   endDrag: (fileName) => ipcRenderer.send("ondragend", fileName),
+  getDirectoryIndex: (folderPath) =>
+    ipcRenderer.invoke("get-directory-index", folderPath),
+  getFile: (filePath) => ipcRenderer.invoke("get-file", filePath),
+  getDirectoryState: () => ipcRenderer.invoke("get-directory-state"),
+  syncDir: (dirStructure) =>
+    ipcRenderer.send("sync-directory-state", dirStructure),
+  clearDir: () => ipcRenderer.invoke("clear-directory-state"),
 });
