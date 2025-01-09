@@ -12,6 +12,7 @@
 }
 
 .directory[data-expanded="true"] {
+  background-color: white;
   /* background-color: darkslateblue; */
 }
 
@@ -33,6 +34,8 @@
 
 .directory-tree[data-expanded="true"] .directory-name {
   margin-bottom: 0.5rem;
+  position: sticky;
+  top: 0;
 }
 
 .directory-name {

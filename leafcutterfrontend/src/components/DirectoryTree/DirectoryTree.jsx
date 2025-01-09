@@ -67,7 +67,14 @@ const Directory = ({ name, path, fetchDirectory }) => {
           if (!directoryIndex) {
             setDirectoryIndex(index);
           }
-          setExpanded((prev) => !prev);
+          setExpanded((prev) => {
+            setTimeout(() => {
+              ref.current.scrollIntoView({
+                behavior: "smooth",
+              });
+            });
+            return !prev;
+          });
         }} // Use the passed toggle function
       >
         {name}
