@@ -3,6 +3,7 @@ const Storage = require("./services/Storage");
 const path = require("path");
 const crypto = require("crypto");
 const fs = require("fs");
+const UserLibrary = require("./services/UserLibrary");
 
 class Main {
   constructor({ dependencies: { electron, storage } }) {
@@ -33,10 +34,11 @@ class Main {
       }
     });
 
-    this.ipcMain.on("ondragstart", async (event, pathname) => {
+    this.ipcMain.on("ondragstart", async (event, pathname, mode = "cloud") => {
       // download and save to tmp folder
       // const fileName = fileUrl.split("/").pop();
-      const filePath = path.join(this.app.getPath("userData"), pathname);
+      const filePath =
+        mode === "cloud" ? path.join(this.app.getPath("userData")) : pathname;
       // await downloadFile(fileUrl, filePath);
       event.sender.startDrag({
         file: filePath,
@@ -68,16 +70,21 @@ class Main {
   }
 }
 
+const baseDependencies = {
+  fs,
+  path,
+  electron,
+  crypto,
+};
+
 new Main({
   dependencies: {
     electron,
     storage: new Storage({
-      dependencies: {
-        fs,
-        path,
-        electron,
-        crypto,
-      },
+      dependencies: baseDependencies,
+    }),
+    userLibrary: new UserLibrary({
+      dependencies: baseDependencies,
     }),
   },
 });

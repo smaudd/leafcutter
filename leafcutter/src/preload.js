@@ -13,10 +13,17 @@ contextBridge.exposeInMainWorld("versions", {
 });
 
 contextBridge.exposeInMainWorld("electron", {
-  startDrag: (fileName) => ipcRenderer.send("ondragstart", fileName),
-  endDrag: (fileName) => ipcRenderer.send("ondragend", fileName),
-  getDirectoryIndex: (folderPath) =>
-    ipcRenderer.invoke("get-directory-index", folderPath),
-  getFile: (filePath) => ipcRenderer.invoke("get-file", filePath),
-  getIndex: (filePath) => ipcRenderer.invoke("get-index", filePath),
+  startDrag: (file, mode = "cloud") =>
+    ipcRenderer.send("ondragstart", file, mode),
+  endDrag: (file) => ipcRenderer.send("ondragend", file),
+  getDirectoryIndex: (dir) => ipcRenderer.invoke("get-directory-index", dir),
+  getFile: (file, mode = "cloud") => ipcRenderer.invoke("get-file", file, mode),
+  getIndex: (
+    file,
+    mode = "cloud" // mode can be "cloud" or "local"
+  ) => ipcRenderer.invoke("get-index", file, mode),
+  getUserDirectory: (dir) => ipcRenderer.invoke("get-user-directory", dir),
+  getUserLibraryConfig: () => ipcRenderer.invoke("get-user-library-config"),
+  deleteUserDirectory: (dir) =>
+    ipcRenderer.invoke("remove-user-directory", dir),
 });

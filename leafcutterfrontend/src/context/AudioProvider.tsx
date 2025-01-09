@@ -34,13 +34,16 @@ export function AudioProvider({ children }) {
     });
 
     source.current.onended = () => {
+      console.log("Ended", needsToChoke);
       if (needsToChoke) {
+        needsToChoke = false;
         return;
       }
       setState({
         isPlaying: false,
         activePlayer: null,
       });
+      source.current = null;
     };
   };
 

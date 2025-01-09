@@ -18,10 +18,15 @@ module.exports = class Storage {
     return this.crypto.createHash("sha256").update(data).digest("hex");
   }
 
-  async getFile(event, pathname = "") {
+  async getFile(event, pathname = "", mode = "cloud") {
     try {
       const filePath = this.path.join(this.userDataPath, pathname);
       const hashPath = `${filePath}.hash`;
+
+      if (mode === "local") {
+        const file = await this.fs.promises.readFile(pathname);
+        return file.buffer; // Return ArrayBuffer
+      }
 
       if (this.fs.existsSync(filePath) && this.fs.existsSync(hashPath)) {
         const fileBuffer = await this.fs.promises.readFile(filePath);
@@ -69,12 +74,19 @@ module.exports = class Storage {
     return data;
   }
 
-  async getIndex(event, pathname = "") {
+  async getIndex(event, pathname = "", mode) {
     try {
-      const localFilePath = this.path.join(this.userDataPath, pathname);
+      const localFilePath =
+        mode === "cloud"
+          ? this.path.join(this.userDataPath, pathname)
+          : pathname;
       const hashPath = `${localFilePath}.hash`;
 
-      if (this.fs.existsSync(localFilePath) && this.fs.existsSync(hashPath)) {
+      if (
+        this.fs.existsSync(localFilePath) &&
+        this.fs.existsSync(hashPath) &&
+        mode === "cloud"
+      ) {
         const fileBuffer = await this.fs.promises.readFile(localFilePath);
         const storedHash = await this.fs.promises.readFile(hashPath, "utf-8");
         const currentHash = this.calculateHash(fileBuffer);
@@ -90,6 +102,11 @@ module.exports = class Storage {
           throw new Error("Index integrity check failed");
         }
         return JSON.parse(fileBuffer.toString());
+      }
+
+      if (mode === "local") {
+        const index = await this.fs.promises.readFile(localFilePath, "utf-8");
+        return { content: JSON.parse(index) };
       }
 
       console.log("Index and hash saved to disk:", localFilePath, hashPath);

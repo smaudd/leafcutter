@@ -1,3 +1,5 @@
+import { get } from "http";
+
 export const bridge = {
   // Versions API
   getVersions: () => ({
@@ -8,23 +10,29 @@ export const bridge = {
 
   // Electron API
   ui: {
-    startDrag: (fileName) => window.electron.startDrag(fileName),
-    endDrag: (fileName) => window.electron.endDrag(fileName),
+    startDrag: (file, mode) => window.electron.startDrag(file, mode),
+    endDrag: (file) => window.electron.endDrag(file),
+  },
+
+  user: {
+    getDirectory: (dir) => window.electron.getUserDirectory(dir),
+    removeDirectory: (dir) => window.electron.deleteUserDirectory(dir),
+    getLibraryConfig: () => window.electron.getUserLibraryConfig(),
   },
 
   data: {
-    getIndex: async (folderPath) => {
+    getIndex: async (dir, mode = "cloud") => {
       try {
-        const result = await window.electron.getIndex(folderPath);
+        const result = await window.electron.getIndex(dir, mode);
         return result; // Process the response as needed
       } catch (error) {
         console.error("Error getting folder content:", error);
         throw error;
       }
     },
-    getFile: async (filePath) => {
+    getFile: async (file, mode = "cloud") => {
       try {
-        const result = await window.electron.getFile(filePath);
+        const result = await window.electron.getFile(file, mode);
         return result; // Process the response as needed
       } catch (error) {
         console.error("Error getting file:", error);
@@ -37,26 +45,6 @@ export const bridge = {
         return result; // Process the response as needed
       } catch (error) {
         console.error("Error getting directory state:", error);
-        throw error;
-      }
-    },
-    sync: async (dirStructure) => {
-      console.log("[bridge] sync", dirStructure);
-      try {
-        const result = await window.electron.syncDir(dirStructure);
-        return result; // Process the response as needed
-      } catch (error) {
-        console.error("Error syncing directory:", error);
-        throw error;
-      }
-    },
-    clear: async () => {
-      try {
-        const result = await window.electron.clearDir();
-        console.log("[bridge] clear", result);
-        return result; // Process the response as needed
-      } catch (error) {
-        console.error("Error clearing directory:", error);
         throw error;
       }
     },

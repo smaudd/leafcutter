@@ -1,14 +1,11 @@
 .directory,
 .file {
   cursor: pointer;
-  padding: 0.5rem;
-  border: 1px solid black;
-  border-radius: 0.25rem;
 }
 
-.directory {
-  /* background-color: rebeccapurple; */
-  /* color: white; */
+.file {
+  padding-left: 1rem;
+  border-left: 2px solid black;
 }
 
 .directory[data-expanded="true"] {
@@ -27,9 +24,8 @@
 .directory-tree {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
-  padding-left: 1rem;
   list-style-type: none;
+  padding: 0;
 }
 
 .directory-tree[data-expanded="true"] .directory-name {
@@ -41,7 +37,23 @@
 .directory-name {
   font-weight: bold;
   padding: 0.5rem;
+  border-left: 2px solid black;
+  border-bottom: none;
+  position: relative;
 }
+
+.directory-content {
+  padding-left: 1rem;
+}
+
+/* .directory-name::before {
+  content: "+";
+  font-size: 2rem;
+  position: absolute;
+  left: -0.5rem;
+  width: 1rem;
+  height: 1rem;
+} */
 
 .directory-name[data-sticky] {
   position: sticky;

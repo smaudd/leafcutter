@@ -3,57 +3,63 @@ import styles from "./DirectoryTree.module.css";
 import Player from "../Player/Player";
 
 const DirectoryTree = React.memo(
-  ({ initialTree, fetchDirectory, parent = "" }) => {
+  ({ initialTree, fetchDirectory, parent = "", mode }) => {
     const keys = Object.keys(initialTree?.content || {});
     const [limit, setLimit] = useState(10);
     return (
-      <ul className={styles["directory-tree"]}>
-        {keys.slice(0, limit).map((key, index) => {
-          const node = initialTree.content[key];
-          if (!node) return null;
-          const path = `${parent}/${key}`;
-          if (node.type === "directory") {
-            return (
-              <Directory
-                key={key}
-                path={path}
-                name={key}
-                fetchDirectory={fetchDirectory}
-              ></Directory>
-            );
-          }
+      <>
+        <ul className={styles["directory-tree"]}>
+          {keys.slice(0, limit).map((key, index) => {
+            const node = initialTree.content[key];
+            if (!node) return null;
+            const path = `${parent}/${key}`;
+            if (node.type === "directory") {
+              return (
+                <Directory
+                  key={key}
+                  path={path}
+                  name={key}
+                  fetchDirectory={fetchDirectory}
+                  mode={mode}
+                ></Directory>
+              );
+            }
 
-          if (node.type === "file") {
-            return (
-              <div className={styles["file"]} key={key}>
-                <Player key={key} path={path} id={index}>
-                  {key}
-                </Player>
-              </div>
-            );
-          }
-        })}
-        {keys.length > limit && (
-          <button onClick={() => setLimit((prev) => prev + 10)}>
-            Show More
-          </button>
-        )}
-      </ul>
+            if (node.type === "file") {
+              return (
+                <div className={styles["file"]} key={key}>
+                  <Player key={key} path={path} id={index} mode={mode}>
+                    {key}
+                  </Player>
+                </div>
+              );
+            }
+          })}
+          {keys.length > limit && (
+            <button onClick={() => setLimit((prev) => prev + 10)}>
+              Show More
+            </button>
+          )}
+        </ul>
+      </>
     );
   }
 );
 
-const Directory = ({ name, path, fetchDirectory }) => {
+const Directory = ({ name, path, fetchDirectory, mode }) => {
   const [directoryIndex, setDirectoryIndex] = useState(null);
   const [expanded, setExpanded] = useState(false);
   const ref = useRef(null);
   const memoized = useMemo(() => {
     return (
-      <DirectoryTree
-        initialTree={directoryIndex}
-        fetchDirectory={fetchDirectory}
-        parent={path}
-      />
+      <div class={styles["directory-content"]}>
+        <DirectoryTree
+          initialTree={directoryIndex}
+          fetchDirectory={fetchDirectory}
+          parent={path}
+          mode={mode}
+        />
+      </div>
     );
   }, [directoryIndex]);
   return (
@@ -63,18 +69,12 @@ const Directory = ({ name, path, fetchDirectory }) => {
         onClick={async () => {
           const index = await fetchDirectory(`${path.trim()}/index.json`, {
             root: false,
+            mode: mode,
           });
           if (!directoryIndex) {
             setDirectoryIndex(index);
           }
-          setExpanded((prev) => {
-            setTimeout(() => {
-              ref.current.scrollIntoView({
-                behavior: "smooth",
-              });
-            });
-            return !prev;
-          });
+          setExpanded((prev) => !prev);
         }} // Use the passed toggle function
       >
         {name}
