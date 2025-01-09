@@ -3,6 +3,7 @@ import DirectoryTree from "./DirectoryTree/DirectoryTree";
 import useDirectory from "../hooks/useDirectory";
 import { bridge } from "../services/bridge";
 import { AudioProvider } from "../context/AudioProvider";
+import Button from "./Button/Button";
 
 const App = () => {
   const {
@@ -59,7 +60,7 @@ const App = () => {
   console.log(userTree);
   return (
     <AudioProvider>
-      <button
+      <Button
         onClick={async () => {
           const index = await bridge.user.getDirectory();
           console.log("Creating directory", index);
@@ -78,7 +79,7 @@ const App = () => {
         }}
       >
         Get directory
-      </button>
+      </Button>
 
       <DirectoryTree
         initialTree={cloudTree}
@@ -97,7 +98,7 @@ const App = () => {
               {Object.keys(tree[tree.directory].content).length} items)
             </h4> */}
             {
-              <button
+              <Button
                 onClick={() => {
                   removeDirectory(tree.directory);
                   console.log("Removing directory", tree.directory, userTree);
@@ -109,7 +110,7 @@ const App = () => {
                 }}
               >
                 Delete directory
-              </button>
+              </Button>
             }
             <DirectoryTree
               initialTree={tree}

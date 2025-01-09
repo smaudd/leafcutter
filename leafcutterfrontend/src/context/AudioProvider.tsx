@@ -12,7 +12,7 @@ export function AudioProvider({ children }) {
     isPlaying: false,
     activePlayer: null,
   });
-  const play = (audioBuffer, playerId) => {
+  const play = (audioBuffer, playerId, offset) => {
     let needsToChoke = false;
     // Stop current playback if another player is active
     if (source.current) {
@@ -25,7 +25,7 @@ export function AudioProvider({ children }) {
     const sourceBuffer = audioContext.current.createBufferSource();
     sourceBuffer.buffer = audioBuffer;
     sourceBuffer.connect(audioContext.current.destination);
-    sourceBuffer.start(0);
+    sourceBuffer.start(0, offset);
 
     source.current = sourceBuffer;
     setState({
@@ -34,7 +34,6 @@ export function AudioProvider({ children }) {
     });
 
     source.current.onended = () => {
-      console.log("Ended", needsToChoke);
       if (needsToChoke) {
         needsToChoke = false;
         return;

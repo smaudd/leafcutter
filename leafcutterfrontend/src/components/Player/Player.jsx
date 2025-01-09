@@ -6,22 +6,30 @@ import Button from "../Button/Button";
 
 export default function Player({ path, id, mode }) {
   const [audioBuffer, setAudioBuffer] = useState(null);
+  const playheadPositionRef = useRef(null); // Playhead position
+  const animationRef = useRef(null); // Ref for animation frame
+  const startTimeRef = useRef(null); // Ref for playback start time
   const canvasRef = useRef(null);
   const { play, stop, isPlaying, activePlayer, audioContext } = useAudio();
 
   useEffect(() => {
-    // Check if file is already downloaded
-    (async () => {
-      handleDownload();
-    })();
+    handleDownload();
   }, []);
+
+  useEffect(() => {
+    if (isPlaying && activePlayer === id) {
+      startPlayheadAnimation();
+    } else {
+      stopPlayheadAnimation();
+    }
+  }, [isPlaying, activePlayer]);
 
   async function handleDownload() {
     try {
-      const buffer = await bridge.data.getFile(path, mode); // Fetch audio file
-      const decodedBuffer = await audioContext.decodeAudioData(buffer); // Decode audio
+      const buffer = await bridge.data.getFile(path, mode);
+      const decodedBuffer = await audioContext.decodeAudioData(buffer);
       setAudioBuffer(decodedBuffer);
-      renderWaveform(decodedBuffer); // Draw waveform
+      renderWaveform(decodedBuffer);
     } catch (error) {
       console.error("Error downloading file:", error);
     }
@@ -32,8 +40,6 @@ export default function Player({ path, id, mode }) {
     if (!canvas || !buffer) return;
 
     const ctx = canvas.getContext("2d");
-
-    // Adjust for device pixel ratio
     const dpr = window.devicePixelRatio || 1;
     const width = canvas.offsetWidth * dpr;
     const height = canvas.offsetHeight * dpr;
@@ -42,45 +48,20 @@ export default function Player({ path, id, mode }) {
     canvas.height = height;
     ctx.scale(dpr, dpr);
 
-    // Disable smoothing
     ctx.webkitImageSmoothingEnabled = false;
     ctx.mozImageSmoothingEnabled = false;
     ctx.imageSmoothingEnabled = false;
-
-    // Create rounded rectangle clipping path
-    const radius = -10; // Adjust for larger or smaller corners
-    ctx.beginPath();
-    ctx.moveTo(radius, 0);
-    ctx.lineTo(canvas.offsetWidth - radius, 0);
-    ctx.quadraticCurveTo(canvas.offsetWidth, 0, canvas.offsetWidth, radius);
-    ctx.lineTo(canvas.offsetWidth, canvas.offsetHeight - radius);
-    ctx.quadraticCurveTo(
-      canvas.offsetWidth,
-      canvas.offsetHeight,
-      canvas.offsetWidth - radius,
-      canvas.offsetHeight
-    );
-    ctx.lineTo(radius, canvas.offsetHeight);
-    ctx.quadraticCurveTo(
-      0,
-      canvas.offsetHeight,
-      0,
-      canvas.offsetHeight - radius
-    );
-    ctx.lineTo(0, radius);
-    ctx.quadraticCurveTo(0, 0, radius, 0);
-    ctx.closePath();
-    ctx.clip(); // Clip all subsequent drawings to this path
 
     const channelData = buffer.getChannelData(0);
     const step = Math.ceil(channelData.length / canvas.offsetWidth);
 
     ctx.clearRect(0, 0, width, height);
     ctx.beginPath();
-    ctx.lineWidth = 1.5; // Adjust line width for thicker lines
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = "#1C274C"; // Waveform color
     ctx.moveTo(0, canvas.offsetHeight / 2);
 
-    for (let i = 0; i < canvas.offsetWidth; i += 3) {
+    for (let i = 0; i < canvas.offsetWidth; i += 1) {
       const min = Math.min(...channelData.slice(i * step, (i + 1) * step));
       const max = Math.max(...channelData.slice(i * step, (i + 1) * step));
 
@@ -94,11 +75,93 @@ export default function Player({ path, id, mode }) {
     ctx.stroke();
   }
 
+  function startPlayheadAnimation(offset = 0) {
+    const canvas = canvasRef.current;
+    if (!canvas || !audioBuffer) return;
+
+    const duration = audioBuffer.duration;
+    const width = canvas.offsetWidth;
+
+    const updatePlayhead = (timestamp) => {
+      if (!startTimeRef.current) startTimeRef.current = timestamp; // Convert to milliseconds
+
+      const elapsed = (timestamp - startTimeRef.current) / 1000 + offset; // Convert to seconds
+      const position = Math.min((elapsed / duration) * width, width); // Map to canvas width
+
+      playheadPositionRef.current = position;
+      drawPlayhead();
+
+      if (elapsed < duration) {
+        animationRef.current = requestAnimationFrame(updatePlayhead);
+      }
+    };
+
+    animationRef.current = requestAnimationFrame(updatePlayhead);
+  }
+
+  function stopPlayheadAnimation() {
+    if (animationRef.current) {
+      cancelAnimationFrame(animationRef.current);
+      animationRef.current = null;
+    }
+    startTimeRef.current = null;
+    playheadPositionRef.current = 0;
+    renderWaveform(audioBuffer);
+  }
+
+  function drawPlayhead() {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext("2d");
+    const width = canvas.offsetWidth;
+    const height = canvas.offsetHeight;
+
+    // Redraw the waveform
+    renderWaveform(audioBuffer);
+
+    // Draw the playhead
+    ctx.beginPath();
+    ctx.strokeStyle = "#FF0000"; // Playhead color
+    ctx.lineWidth = 2;
+    ctx.moveTo(playheadPositionRef.current, 0);
+    ctx.lineTo(playheadPositionRef.current, height);
+    ctx.stroke();
+  }
+
   async function handleDragStart(e) {
     e.preventDefault();
     await bridge.ui.startDrag(path, mode);
   }
+
   const isThisPlayerActive = activePlayer === id;
+
+  function handleCanvasClick(event) {
+    play(audioBuffer, id);
+    // if (!audioBuffer || !audioContext) return;
+
+    // const canvas = canvasRef.current;
+    // const rect = canvas.getBoundingClientRect(); // Get canvas bounds
+    // const x = event.clientX - rect.left; // Get click X coordinate relative to canvas
+
+    // // Map the X coordinate to the audio buffer time
+    // const duration = audioBuffer.duration; // Total duration of the audio
+    // const clickedTime = (x / canvas.offsetWidth) * duration;
+
+    // // Play the audio from the clicked time
+    // if (audioContext.state === "suspended") {
+    //   audioContext.resume(); // Ensure the context is running
+    // }
+
+    // const source = audioContext.createBufferSource();
+    // source.buffer = audioBuffer;
+    // source.connect(audioContext.destination);
+    // source.start(0, clickedTime); // Start playback at the calculated time
+    // startPlayheadAnimation(clickedTime);
+    // source.onended = () => {
+    //   stopPlayheadAnimation();
+    // };
+  }
 
   return (
     <div
@@ -106,7 +169,6 @@ export default function Player({ path, id, mode }) {
       draggable
       onDragStart={handleDragStart}
     >
-      {/* {isThisPlayerActive && isPlaying && <span>Playing...</span>} */}
       <div className={styles["header"]}>
         <h4 className={styles["title"]}>{path.split("/").at(-1)}</h4>
         <Button onClick={() => play(audioBuffer, id)}>
@@ -140,13 +202,11 @@ export default function Player({ path, id, mode }) {
         </Button>
       </div>
       <div>
-        <canvas ref={canvasRef} className={styles["canvas"]}></canvas>
-        {/* <Button
-            onClick={() => stop(id)}
-            disabled={isThisPlayerActive && !isPlaying && !audioBuffer}
-            >
-            Stop
-            </Button> */}
+        <canvas
+          ref={canvasRef}
+          className={styles["canvas"]}
+          onClick={handleCanvasClick}
+        ></canvas>
       </div>
     </div>
   );
