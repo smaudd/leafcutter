@@ -18,8 +18,5 @@ contextBridge.exposeInMainWorld("electron", {
   getDirectoryIndex: (folderPath) =>
     ipcRenderer.invoke("get-directory-index", folderPath),
   getFile: (filePath) => ipcRenderer.invoke("get-file", filePath),
-  getDirectoryState: () => ipcRenderer.invoke("get-directory-state"),
-  syncDir: (dirStructure) =>
-    ipcRenderer.send("sync-directory-state", dirStructure),
-  clearDir: () => ipcRenderer.invoke("clear-directory-state"),
+  getIndex: (filePath) => ipcRenderer.invoke("get-index", filePath),
 });

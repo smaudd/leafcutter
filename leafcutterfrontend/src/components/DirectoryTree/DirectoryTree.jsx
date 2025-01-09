@@ -6,6 +6,7 @@ const DirectoryTree = React.memo(
   ({ initialTree, fetchDirectory, parent = "" }) => {
     const keys = Object.keys(initialTree?.content || {});
     const [limit, setLimit] = useState(10);
+    console.log("Rendering...", keys);
     return (
       <ul className={styles["directory-tree"]}>
         {keys.slice(0, limit).map((key) => {
@@ -71,11 +72,7 @@ const Directory = ({ name, path, fetchDirectory }) => {
       >
         {name}
       </div>
-      <div
-        className={styles["content"]}
-      >
-        {expanded && memoized}
-      </div>
+      <div className={styles["content"]}>{expanded && memoized}</div>
     </li>
   );
 };

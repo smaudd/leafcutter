@@ -14,7 +14,7 @@ const App = () => {
   }, []);
 
   async function handleClear() {
-    await bridge.data.clear();
+    // await bridge.data.clear();
     // fetchDirectoryState();
   }
 

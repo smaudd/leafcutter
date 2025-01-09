@@ -13,9 +13,9 @@ export const bridge = {
   },
 
   data: {
-    getDirectoryIndex: async (folderPath) => {
+    getIndex: async (folderPath) => {
       try {
-        const result = await window.electron.getDirectoryIndex(folderPath);
+        const result = await window.electron.getIndex(folderPath);
         return result; // Process the response as needed
       } catch (error) {
         console.error("Error getting folder content:", error);

@@ -8,7 +8,6 @@ export default function useDirectory() {
     setLoading(true);
     try {
       const data = await bridge.data.getDirectoryState();
-      console.log("DATA IS", data);
       // if data is empty, ask for the root directory
       if (Object.keys(data).length === 0) {
         console.log("No directory state found, fetching root directory");
@@ -25,50 +24,13 @@ export default function useDirectory() {
   const fetchDirectory = async (path, { root, status = "expanded" }) => {
     // setLoading(true);
     try {
-      const index = await bridge.data.getDirectoryIndex(path);
-      //   setTree(index);
+      const index = await bridge.data.getIndex(path);
+      if (index.error) {
+        throw new Error(index.error);
+      }
       return index;
-      //   if (Object.keys(index).length === 0) {
-      //     console.log("No directory found at path", path);
-      //     return;
-      //   }
-      //   const newTree = { ...tree };
-      //   let current = newTree;
-
-      //   if (root) {
-      //     const rootDef = { content: index };
-      //     setTree(rootDef);
-      //     await bridge.data.sync(rootDef);
-      //     return;
-      //   }
-
-      //   const segments = path
-      //     .replace("index.json", "")
-      //     .split("/")
-      //     .filter((segment) => segment)
-      //     .slice(1);
-
-      //   for (const segment of segments) {
-      //     if (!current.content) {
-      //       current.content = {}; // Ensure the content object exists
-      //     }
-
-      //     if (!current.content[segment]) {
-      //       current.content[segment] = {
-      //         type: "directory",
-      //         content: {},
-      //       };
-      //     }
-
-      //     current = current.content[segment];
-      //     current.status = status;
-      //   }
-
-      //   current.content = index; // Inject the fetched index into the correct node
-      //   console.log("Syn with new tree", newTree);
-      //   await bridge.data.sync(newTree); // Sync the new directory structure with the backend
-      //   setTree(newTree);
     } catch (error) {
+      alert(error);
       console.error("Error fetching directory:", error);
     } finally {
       //   setLoading(false);
