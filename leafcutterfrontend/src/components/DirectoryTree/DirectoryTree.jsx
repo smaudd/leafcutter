@@ -8,7 +8,7 @@ const DirectoryTree = React.memo(
     const [limit, setLimit] = useState(10);
     return (
       <ul className={styles["directory-tree"]}>
-        {keys.slice(0, limit).map((key) => {
+        {keys.slice(0, limit).map((key, index) => {
           const node = initialTree.content[key];
           if (!node) return null;
           const path = `${parent}/${key}`;
@@ -25,9 +25,11 @@ const DirectoryTree = React.memo(
 
           if (node.type === "file") {
             return (
-              <Player key={key} path={path}>
-                {key}
-              </Player>
+              <div className={styles["file"]} key={key}>
+                <Player key={key} path={path} id={index}>
+                  {key}
+                </Player>
+              </div>
             );
           }
         })}
@@ -55,7 +57,7 @@ const Directory = ({ name, path, fetchDirectory }) => {
     );
   }, [directoryIndex]);
   return (
-    <li className={styles["directory"]} ref={ref}>
+    <li className={styles["directory"]} ref={ref} data-expanded={expanded}>
       <div
         className={styles["directory-name"]}
         onClick={async () => {

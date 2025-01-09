@@ -32,12 +32,23 @@ class Main {
         this.createWindow();
       }
     });
+
+    this.ipcMain.on("ondragstart", async (event, pathname) => {
+      // download and save to tmp folder
+      // const fileName = fileUrl.split("/").pop();
+      const filePath = path.join(this.app.getPath("userData"), pathname);
+      // await downloadFile(fileUrl, filePath);
+      event.sender.startDrag({
+        file: filePath,
+        icon: path.join(__dirname, "assets", "icon.png"),
+      });
+    });
   }
 
   createWindow() {
     // Create the browser window.
     this.mainWindow = new this.BrowserWindow({
-      width: 800,
+      width: 620,
       height: 600,
       webPreferences: {
         preload: path.join(__dirname, "preload.js"),
@@ -70,17 +81,5 @@ new Main({
     }),
   },
 });
-
-// ipcMain.on("ondragstart", async (event, fileUrl) => {
-//   // download and save to tmp folder
-//   const fileName = fileUrl.split("/").pop();
-//   const filePath = path.join(app.getPath("temp"), fileName);
-//   await downloadFile(fileUrl, filePath);
-//   event.preventDefault();
-//   event.sender.startDrag({
-//     file: filePath,
-//     icon: path.join(__dirname, "assets", "icon.png"),
-//   });
-// });
 
 // ipcMain.on("ondragend", async (event, fileUrl) => {});

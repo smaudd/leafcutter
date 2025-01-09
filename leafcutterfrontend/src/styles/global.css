@@ -1,0 +1,11 @@
+* {
+  box-sizing: border-box;
+  font-family: sans-serif;
+  user-select: none;
+}
+
+body {
+  background-color: white;
+  max-width: 600px;
+  margin: 0 auto;
+}

@@ -1,7 +1,22 @@
 .directory,
 .file {
-  font-family: "Courier New", Courier, monospace;
   cursor: pointer;
+  padding: 0.5rem;
+  border: 1px solid black;
+  border-radius: 0.25rem;
+}
+
+.directory {
+  /* background-color: rebeccapurple; */
+  /* color: white; */
+}
+
+.directory[data-expanded="true"] {
+  /* background-color: darkslateblue; */
+}
+
+.file {
+  /* background-color: rgb(71, 66, 101); */
 }
 
 .directory .content[data-hidden="true"] {
@@ -16,12 +31,13 @@
   list-style-type: none;
 }
 
-.directory-name {
-  font-weight: bold;
+.directory-tree[data-expanded="true"] .directory-name {
+  margin-bottom: 0.5rem;
 }
 
-.directory > .directory-name:first-child {
-  margin-bottom: 1rem;
+.directory-name {
+  font-weight: bold;
+  padding: 0.5rem;
 }
 
 .directory-name[data-sticky] {

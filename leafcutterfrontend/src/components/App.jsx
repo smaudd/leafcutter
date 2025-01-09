@@ -2,6 +2,7 @@ import React, { useEffect } from "react";
 import DirectoryTree from "./DirectoryTree/DirectoryTree";
 import useDirectory from "../hooks/useDirectory";
 import { bridge } from "../services/bridge";
+import { AudioProvider } from "../context/AudioProvider";
 
 const App = () => {
   const { tree, setTree, loading, fetchDirectory, fetchDirectoryState } =
@@ -21,14 +22,14 @@ const App = () => {
   console.log("Initial tree", tree);
 
   return (
-    <>
+    <AudioProvider>
       <button onClick={handleClear}>Clear</button>
       <DirectoryTree
         initialTree={tree}
         fetchDirectory={fetchDirectory}
         parent="samples"
       />
-    </>
+    </AudioProvider>
   );
 };
 

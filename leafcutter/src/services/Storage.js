@@ -29,7 +29,6 @@ module.exports = class Storage {
         const currentHash = this.calculateHash(fileBuffer);
         console.log(storedHash, currentHash);
         if (storedHash !== currentHash) {
-          console.log("File integrity problem!");
           const buffer = await this.downloadFile(
             { file: filePath, hash: hashPath },
             pathname
