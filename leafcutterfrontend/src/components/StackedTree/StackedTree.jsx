@@ -76,15 +76,31 @@ const StackedTree = ({ initialTree, fetchDirectory, setTree, root }) => {
 
   const handleClose = async () => {
     setOpacity(0);
-    listRef.current.ontransitionend = () => {
-      setTree(initialTree, {
-        content: {
-          [rootDirectory.current]: {
-            type: "directory",
+    const root = initialTree.directory === rootDirectory.current;
+    const path = root
+      ? rootDirectory.current
+      : initialTree.directory.split("/").slice(0, -1).join("/");
+    const index = await fetchDirectory(`${path}/index.json`);
+
+    listRef.current.ontransitionend = async () => {
+      // close should go back to the previous directory
+      if (root) {
+        setTree(initialTree, {
+          content: {
+            [rootDirectory.current]: {
+              type: "directory",
+            },
           },
-        },
-        directory: rootDirectory.current,
-        root: true,
+          directory: rootDirectory.current,
+          root: true,
+        });
+        setOpacity(1);
+        return;
+      }
+      setTree(initialTree, {
+        content: index.content,
+        directory: root ? initialTree.directory : path,
+        root,
       });
       setOpacity(1);
     };

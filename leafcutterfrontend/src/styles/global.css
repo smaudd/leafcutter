@@ -1,7 +1,8 @@
 * {
   box-sizing: border-box;
-  font-family: "Courier New", Courier, monospace;
+  font-family: monospace;
   user-select: none;
+  letter-spacing: 0.12rem;
 }
 
 body {
