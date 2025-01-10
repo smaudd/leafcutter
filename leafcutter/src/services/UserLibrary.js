@@ -47,6 +47,7 @@ module.exports = class UserLibrary {
       libraryConfigPath,
       JSON.stringify(libraryConfig)
     );
+    await this.deleteSearchFolderAndIndexes(dir);
 
     // TODO: Delete the index.json file for the directory recursively
   }
@@ -109,10 +110,15 @@ module.exports = class UserLibrary {
     } else {
       path = dir;
     }
+    function wait(ms) {
+      return new Promise((resolve) => {
+        setTimeout(resolve, 1000);
+      });
+    }
 
     // read the directory recursively and return the structure
     try {
-      this.generateIndexDirectory(path);
+      await this.generateIndexDirectory(path);
       console.log("Saving", path);
       await this.saveIndexedDirectory(path);
       // await this.removeIndexedDirectory(path);
@@ -128,84 +134,197 @@ module.exports = class UserLibrary {
     }
   }
 
-  generateIndexDirectory(dir) {
-    // Supported file formats (extensions) for audio and image files
+  async generateIndexDirectory(dir) {
     const supportedFormats = ["mp3", "wav", "flac", "ogg", "tiff", "midi"];
-
     const excludedFiles = [".DS_Store"];
 
-    // Function to calculate the MD5 checksum of a file
-    const calculateChecksum = (filePath) => {
+    const calculateChecksum = (data) => {
       const hash = this.crypto.createHash("md5");
-      const fileBuffer = this.fs.readFileSync(filePath);
-      hash.update(fileBuffer);
+      hash.update(data);
       return hash.digest("hex");
     };
 
-    // Function to check if the file is an audio or image file
     const isSupportedFile = (file) => {
       const ext = this.path.extname(file).slice(1).toLowerCase();
       return supportedFormats.includes(ext) && !excludedFiles.includes(file);
     };
 
-    // Function to process a single directory and generate its index
-    const generateDirectoryIndex = (dirPath) => {
+    const generateIndex = async (dirPath) => {
       const index = {};
+      const files = await this.fs.promises.readdir(dirPath);
 
-      // Read the contents of the directory
-      const files = this.fs.readdirSync(dirPath);
-
-      files.forEach((file) => {
+      for (const file of files) {
         const fullPath = this.path.join(dirPath, file);
-        const stat = this.fs.statSync(fullPath);
+        const stat = await this.fs.promises.stat(fullPath);
 
-        // If it's a file and it's an audio or image file, add details to the index
         if (stat.isFile() && isSupportedFile(file)) {
           const fileFormat = this.path.extname(file).slice(1) || "unknown";
           const fileSize = stat.size;
-          const checksum = calculateChecksum(fullPath);
+          const fileBuffer = await this.fs.promises.readFile(fullPath);
+          const checksum = calculateChecksum(fileBuffer);
 
           index[file] = {
+            name: file,
+            file: fullPath,
             type: "file",
             format: fileFormat,
             size: fileSize,
-            checksum: checksum,
+            checksum,
           };
+        } else if (stat.isDirectory()) {
+          index[file] = { type: "directory", name: file, dir: fullPath };
         }
-        // If it's a directory, mark it as a directory in the index
-        else if (stat.isDirectory()) {
-          index[file] = {
-            type: "directory",
-          };
-        }
-      });
+      }
 
-      // Save the index for this directory in a JSON file named 'index.json'
       const indexPath = this.path.join(dirPath, "index.json");
-      this.fs.writeFileSync(indexPath, JSON.stringify(index, null, 2));
+      await this.fs.promises.writeFile(
+        indexPath,
+        JSON.stringify({ content: index }, null, 2)
+      );
       console.log(`Index saved for directory: ${dirPath}`);
+      return index; // Return the generated index
     };
 
-    // Function to recursively process subdirectories
-    const processDirectoryRecursively = (rootDir) => {
-      const files = this.fs.readdirSync(rootDir);
+    let globalIndex = [];
+    const processDirectoryRecursively = async (rootDir) => {
+      if (rootDir.includes("_search")) {
+        return;
+      }
+      const files = await this.fs.promises.readdir(rootDir);
 
-      files.forEach((file) => {
+      for (const file of files) {
         const fullPath = this.path.join(rootDir, file);
-        const stat = this.fs.statSync(fullPath);
+        const stat = await this.fs.promises.stat(fullPath);
 
-        // If it's a directory, generate an index for it
         if (stat.isDirectory()) {
-          generateDirectoryIndex(fullPath); // Generate index for the directory
-          processDirectoryRecursively(fullPath); // Recursively process subdirectories
+          const subDirIndex = await generateIndex(fullPath);
+          globalIndex.push(...Object.values(subDirIndex));
+          await processDirectoryRecursively(fullPath);
         }
-      });
+      }
     };
 
-    // Main function to execute the script
-    processDirectoryRecursively(dir);
+    await generateIndex(dir);
 
-    // Generate directory index for first level
-    generateDirectoryIndex(dir);
+    const calculateTopLevelChecksum = async (dirPath) => {
+      const files = await this.fs.promises.readdir(dirPath, {
+        recursive: true,
+      });
+      const contentNames = files.sort().join(",");
+      return calculateChecksum(contentNames);
+    };
+    const topLevelChecksumPath = this.path.join(dir, "top_level_checksum.txt");
+    let previousChecksum = null;
+    try {
+      previousChecksum = await this.fs.promises.readFile(
+        topLevelChecksumPath,
+        "utf8"
+      );
+    } catch (err) {
+      if (err.code !== "ENOENT") {
+        throw err;
+      }
+    }
+    console.log(previousChecksum);
+    const currentChecksum = await calculateTopLevelChecksum(dir);
+
+    if (currentChecksum === previousChecksum) {
+      console.log("No changes detected. Skipping reindexing.");
+      return;
+    }
+
+    console.log("Changes detected. Reindexing...");
+    await this.fs.promises.writeFile(topLevelChecksumPath, currentChecksum);
+
+    await processDirectoryRecursively(dir);
+
+    globalIndex = globalIndex.filter((i) => {
+      return i.type === "file";
+    });
+
+    // Paginate the global index
+    const pageSize = 10;
+    const pages = Math.ceil(globalIndex.length / pageSize);
+    // check if seach directory exists
+    const searchDir = this.path.join(dir, "_search");
+    if (!this.fs.existsSync(searchDir)) {
+      await this.fs.promises.mkdir(searchDir);
+    }
+    for (let i = 0; i < pages; i++) {
+      const paginatedIndex = globalIndex.slice(
+        i * pageSize,
+        (i + 1) * pageSize
+      );
+      const paginatedIndexPath = this.path.join(searchDir, `${i + 1}.json`);
+      await this.fs.promises.writeFile(
+        paginatedIndexPath,
+        JSON.stringify(
+          { content: paginatedIndex, next: i < pages - 1, total: pages },
+          null,
+          2
+        )
+      );
+      console.log(`Paginated index saved for page ${i + 1}`);
+    }
+
+    console.log("Global index pagination complete.");
   }
+
+  deleteSearchFolderAndIndexes = async (dir) => {
+    const searchDir = this.path.join(dir, "_search");
+
+    // Delete all index.json files recursively in the directory
+    const deleteIndexFiles = async (dirPath) => {
+      const files = await this.fs.promises.readdir(dirPath);
+
+      for (const file of files) {
+        const fullPath = this.path.join(dirPath, file);
+        const stat = await this.fs.promises.stat(fullPath);
+
+        // If it's a file named index.json, delete it
+        if (stat.isFile() && file === "index.json") {
+          await this.fs.promises.unlink(fullPath);
+          console.log(`Deleted file: ${fullPath}`);
+        }
+        // If it's a directory, recursively delete index.json inside it
+        else if (stat.isDirectory()) {
+          await deleteIndexFiles(fullPath);
+        }
+      }
+    };
+
+    // Delete the _search directory and all files within it
+    const deleteSearchDirectory = async (dirPath) => {
+      const files = await this.fs.promises.readdir(dirPath);
+
+      for (const file of files) {
+        const fullPath = this.path.join(dirPath, file);
+        const stat = await this.fs.promises.stat(fullPath);
+
+        // If it's a file, delete it
+        if (stat.isFile()) {
+          await this.fs.promises.unlink(fullPath);
+          console.log(`Deleted file: ${fullPath}`);
+        }
+        // If it's a directory, recursively delete its contents
+        else if (stat.isDirectory()) {
+          await deleteSearchDirectory(fullPath);
+        }
+      }
+
+      // Finally, remove the _search directory itself
+      await this.fs.promises.rmdir(dirPath);
+      console.log(`Deleted _search directory: ${dirPath}`);
+    };
+
+    // First, delete all index.json files in the entire directory
+    await deleteIndexFiles(dir);
+
+    // Then, delete the _search directory
+    if (this.fs.existsSync(searchDir)) {
+      await deleteSearchDirectory(searchDir);
+    } else {
+      console.log("No _search directory found to delete.");
+    }
+  };
 };

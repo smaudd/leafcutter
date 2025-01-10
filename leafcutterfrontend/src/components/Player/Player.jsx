@@ -3,8 +3,9 @@ import { useAudio } from "../../context/AudioProvider";
 import { bridge } from "../../services/bridge";
 import styles from "./Player.module.css";
 import Button from "../Button/Button";
+import color from "../../services/color";
 
-export default function Player({ path, id, mode }) {
+export default function Player({ path, id, mode, highlight }) {
   const [audioBuffer, setAudioBuffer] = useState(null);
   const playheadPositionRef = useRef(null); // Playhead position
   const animationRef = useRef(null); // Ref for animation frame
@@ -163,43 +164,23 @@ export default function Player({ path, id, mode }) {
     // };
   }
 
+  const titleColor = useRef(color.getRandomColor());
+
   return (
     <div
-      className={styles["container"]}
+      className={`${styles["container"]} ${
+        highlight ? styles["highlight"] : ""
+      }`}
       draggable
       onDragStart={handleDragStart}
     >
       <div className={styles["header"]}>
-        <h4 className={styles["title"]}>{path.split("/").at(-1)}</h4>
-        <Button onClick={() => play(audioBuffer, id)}>
-          {isPlaying && isThisPlayerActive ? (
-            <svg
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M2 6c0-1.886 0-2.828.586-3.414C3.172 2 4.114 2 6 2c1.886 0 2.828 0 3.414.586C10 3.172 10 4.114 10 6v12c0 1.886 0 2.828-.586 3.414C8.828 22 7.886 22 6 22c-1.886 0-2.828 0-3.414-.586C2 20.828 2 19.886 2 18V6ZM14 6c0-1.886 0-2.828.586-3.414C15.172 2 16.114 2 18 2c1.886 0 2.828 0 3.414.586C22 3.172 22 4.114 22 6v12c0 1.886 0 2.828-.586 3.414C20.828 22 19.886 22 18 22c-1.886 0-2.828 0-3.414-.586C14 20.828 14 19.886 14 18V6Z"
-                fill="#1C274C"
-              />
-            </svg>
-          ) : (
-            <svg
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M21.409 9.353a2.998 2.998 0 0 1 0 5.294L8.597 21.614C6.534 22.736 4 21.276 4 18.968V5.033c0-2.31 2.534-3.769 4.597-2.648l12.812 6.968Z"
-                fill="#1C274C"
-              />
-            </svg>
-          )}
-        </Button>
+        <h4
+          className={styles["title"]}
+          style={{ backgroundColor: titleColor.current, color: "#fff" }}
+        >
+          {path.split("/").at(-1)}
+        </h4>
       </div>
       <div>
         <canvas
@@ -208,6 +189,35 @@ export default function Player({ path, id, mode }) {
           onClick={handleCanvasClick}
         ></canvas>
       </div>
+      <Button onClick={() => play(audioBuffer, id)}>
+        {isPlaying && isThisPlayerActive ? (
+          <svg
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M2 6c0-1.886 0-2.828.586-3.414C3.172 2 4.114 2 6 2c1.886 0 2.828 0 3.414.586C10 3.172 10 4.114 10 6v12c0 1.886 0 2.828-.586 3.414C8.828 22 7.886 22 6 22c-1.886 0-2.828 0-3.414-.586C2 20.828 2 19.886 2 18V6ZM14 6c0-1.886 0-2.828.586-3.414C15.172 2 16.114 2 18 2c1.886 0 2.828 0 3.414.586C22 3.172 22 4.114 22 6v12c0 1.886 0 2.828-.586 3.414C20.828 22 19.886 22 18 22c-1.886 0-2.828 0-3.414-.586C14 20.828 14 19.886 14 18V6Z"
+              fill="#1C274C"
+            />
+          </svg>
+        ) : (
+          <svg
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M21.409 9.353a2.998 2.998 0 0 1 0 5.294L8.597 21.614C6.534 22.736 4 21.276 4 18.968V5.033c0-2.31 2.534-3.769 4.597-2.648l12.812 6.968Z"
+              fill="#1C274C"
+            />
+          </svg>
+        )}
+      </Button>
     </div>
   );
 }

@@ -48,6 +48,15 @@ export const bridge = {
         throw error;
       }
     },
+    searchIndex: async (pathname, page) => {
+      try {
+        const result = await window.electron.searchIndex(pathname, page);
+        return result; // Process the response as needed
+      } catch (error) {
+        console.error("Error searching index:", error);
+        throw error;
+      }
+    },
   },
 
   //   // Asset Management

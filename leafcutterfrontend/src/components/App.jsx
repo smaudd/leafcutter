@@ -4,6 +4,8 @@ import useDirectory from "../hooks/useDirectory";
 import { bridge } from "../services/bridge";
 import { AudioProvider } from "../context/AudioProvider";
 import Button from "./Button/Button";
+import SearchBar from "./SearchBar/SearchBar";
+import StackedTree from "./StackedTree/StackedTree";
 
 const App = () => {
   const {
@@ -12,7 +14,7 @@ const App = () => {
     loading,
     fetchDirectory: fetchCloudDirectory,
     // fetchDirectoryState,
-  } = useDirectory("cloud");
+  } = useDirectory();
 
   const {
     tree: userTree,
@@ -21,13 +23,23 @@ const App = () => {
     fetchDirectory: fetchUserDirectory,
     removeDirectory,
     // fetchDirectoryState,
-  } = useDirectory("local");
+  } = useDirectory();
 
   useEffect(() => {
     (async () => {
-      setCloudTree(
-        await fetchCloudDirectory("samples/index.json", { root: true })
-      );
+      const dirBase = "http://127.0.0.1:5500/samples";
+      const index = await fetchCloudDirectory(`${dirBase}/index.json`, {
+        root: true,
+      });
+      let preffixed = {};
+      for (const key in index.content) {
+        preffixed[dirBase + "/" + key] = index.content[key];
+      }
+      setCloudTree({
+        content: preffixed,
+        root: true,
+        directory: dirBase,
+      });
       const userLibraryConfig = await bridge.user.getLibraryConfig();
       const directories = userLibraryConfig.directories.map((dir) =>
         bridge.user.getDirectory(dir)
@@ -43,11 +55,14 @@ const App = () => {
                 type: "directory",
               },
             },
+            root: true,
             directory: dirName,
           };
         })
       );
-      // setTree(await fetchUserDirectory("samples/index.json", { root: true }));
+      // setUserTree(
+      //   await fetchUserDirectory("samples/index.json", { root: true })
+      // );
     })();
   }, []);
 
@@ -56,8 +71,6 @@ const App = () => {
     // fetchDirectoryState();
   }
 
-  // console.log("Initial tree", tree);
-  console.log(userTree);
   return (
     <AudioProvider>
       <Button
@@ -73,6 +86,7 @@ const App = () => {
                   type: "directory",
                 },
               },
+              root: true,
               directory: index.directory,
             },
           ]);
@@ -80,23 +94,52 @@ const App = () => {
       >
         Get directory
       </Button>
-
-      <DirectoryTree
-        initialTree={cloudTree}
-        fetchDirectory={fetchCloudDirectory}
-        removeDirectory={removeDirectory}
-        parent="samples"
-        mode="cloud"
-      />
+      <div>
+        {/* <DirectoryTree
+          initialTree={cloudTree}
+          fetchDirectory={fetchCloudDirectory}
+          removeDirectory={removeDirectory}
+          parent="https://couponsb.fra1.digitaloceanspaces.com/samples"
+        /> */}
+        {cloudTree && (
+          <StackedTree
+            initialTree={cloudTree}
+            setTree={(prev, next) => {
+              setCloudTree(next);
+            }}
+            // parent={tree.parent}
+            root={cloudTree?.root}
+            fetchDirectory={fetchCloudDirectory}
+          />
+        )}
+      </div>
       <h2>Local</h2>
       {userTree &&
         userTree.length > 0 &&
         userTree.map((tree) => (
           <>
-            {/* <h4>
-              {tree.directory} (
-              {Object.keys(tree[tree.directory].content).length} items)
-            </h4> */}
+            <SearchBar
+              basePath={tree.directory}
+              onClickElement={async (element) => {
+                const path = element.file.split("/").slice(0, -1).join("/");
+                const index = await fetchUserDirectory(`${path}/index.json`);
+                setUserTree((prev) => {
+                  return prev.map((item) => {
+                    if (item.directory === tree.directory) {
+                      return {
+                        ...item,
+                        ...index,
+                        directory: path,
+                        root: tree.directory === path,
+                        highlight: element.file,
+                      };
+                    }
+                    return item;
+                  });
+                });
+                console.log("Element clicked", element, path);
+              }}
+            />
             {
               <Button
                 onClick={() => {
@@ -112,11 +155,23 @@ const App = () => {
                 Delete directory
               </Button>
             }
-            <DirectoryTree
+
+            <StackedTree
               initialTree={tree}
+              setTree={(prev, next) => {
+                // update only the tree that was changed
+                setUserTree((prevTree) => {
+                  return prevTree.map((item) => {
+                    if (item.directory === prev.directory) {
+                      return next;
+                    }
+                    return item;
+                  });
+                });
+              }}
+              // parent={tree.parent}
+              root={tree.root}
               fetchDirectory={fetchUserDirectory}
-              parent=""
-              mode="local"
             />
           </>
         ))}

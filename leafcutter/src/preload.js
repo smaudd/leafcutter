@@ -22,6 +22,8 @@ contextBridge.exposeInMainWorld("electron", {
     file,
     mode = "cloud" // mode can be "cloud" or "local"
   ) => ipcRenderer.invoke("get-index", file, mode),
+  searchIndex: (pathname, page) =>
+    ipcRenderer.invoke("get-search-index-page", pathname, page),
   getUserDirectory: (dir) => ipcRenderer.invoke("get-user-directory", dir),
   getUserLibraryConfig: () => ipcRenderer.invoke("get-user-library-config"),
   deleteUserDirectory: (dir) =>

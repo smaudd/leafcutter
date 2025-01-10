@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { bridge } from "../services/bridge";
 
-export default function useDirectory(mode = "cloud") {
+export default function useDirectory() {
   const [tree, setTree] = useState(null);
   const [loading, setLoading] = useState(false);
   // const fetchDirectoryState = async () => {
@@ -21,13 +21,10 @@ export default function useDirectory(mode = "cloud") {
   //     setLoading(false);
   //   }
   // };
-  const fetchDirectory = async (
-    path,
-    { root, status = "expanded", mode = "cloud" }
-  ) => {
+  const fetchDirectory = async (pathname) => {
     // setLoading(true);
     try {
-      const index = await bridge.data.getIndex(path, mode);
+      const index = await bridge.data.getIndex(pathname);
       if (index.error) {
         throw new Error(index.error);
       }

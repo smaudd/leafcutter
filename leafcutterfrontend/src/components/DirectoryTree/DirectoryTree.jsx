@@ -3,7 +3,7 @@ import styles from "./DirectoryTree.module.css";
 import Player from "../Player/Player";
 
 const DirectoryTree = React.memo(
-  ({ initialTree, fetchDirectory, parent = "", mode }) => {
+  ({ initialTree, fetchDirectory, parent = "" }) => {
     const keys = Object.keys(initialTree?.content || {});
     const [limit, setLimit] = useState(10);
     return (
@@ -20,7 +20,6 @@ const DirectoryTree = React.memo(
                   path={path}
                   name={key}
                   fetchDirectory={fetchDirectory}
-                  mode={mode}
                 ></Directory>
               );
             }
@@ -28,7 +27,7 @@ const DirectoryTree = React.memo(
             if (node.type === "file") {
               return (
                 <div className={styles["file"]} key={key}>
-                  <Player key={key} path={path} id={index} mode={mode}>
+                  <Player key={key} path={path} id={index}>
                     {key}
                   </Player>
                 </div>
@@ -46,19 +45,18 @@ const DirectoryTree = React.memo(
   }
 );
 
-const Directory = ({ name, path, fetchDirectory, mode }) => {
+const Directory = ({ name, path, fetchDirectory }) => {
   const [directoryIndex, setDirectoryIndex] = useState(null);
   const [expanded, setExpanded] = useState(false);
   const ref = useRef(null);
   const memoized = useMemo(() => {
     return (
       <div class={styles["directory-content"]}>
-        <DirectoryTree
+        {/* <DirectoryTree
           initialTree={directoryIndex}
           fetchDirectory={fetchDirectory}
           parent={path}
-          mode={mode}
-        />
+        /> */}
       </div>
     );
   }, [directoryIndex]);
@@ -67,10 +65,7 @@ const Directory = ({ name, path, fetchDirectory, mode }) => {
       <div
         className={styles["directory-name"]}
         onClick={async () => {
-          const index = await fetchDirectory(`${path.trim()}/index.json`, {
-            root: false,
-            mode: mode,
-          });
+          const index = await fetchDirectory(`${path.trim()}/index.json`);
           if (!directoryIndex) {
             setDirectoryIndex(index);
           }
@@ -79,7 +74,17 @@ const Directory = ({ name, path, fetchDirectory, mode }) => {
       >
         {name}
       </div>
-      <div className={styles["content"]}>{expanded && memoized}</div>
+      <div className={styles["content"]}>
+        {expanded && (
+          <div class={styles["directory-content"]}>
+            <DirectoryTree
+              initialTree={directoryIndex}
+              fetchDirectory={fetchDirectory}
+              parent={path}
+            />
+          </div>
+        )}
+      </div>
     </li>
   );
 };

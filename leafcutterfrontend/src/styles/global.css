@@ -10,3 +10,28 @@ body {
   margin: 0 auto;
   padding: 1rem;
 }
+
+/* Global scrollbar styling */
+::-webkit-scrollbar {
+  width: 4px; /* Small width for vertical scroll */
+  height: 4px; /* Small height for horizontal scroll */
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2); /* Subtle dark color */
+  border-radius: 0; /* Square edges */
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.4); /* Slightly darker when hovered */
+}
+
+::-webkit-scrollbar-track {
+  background: transparent; /* Transparent track */
+}
+
+/* For Firefox */
+* {
+  scrollbar-width: thin; /* Thin scrollbar */
+  scrollbar-color: rgba(0, 0, 0, 0.2) transparent; /* Thumb and track colors */
+}
