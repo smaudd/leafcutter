@@ -25,16 +25,21 @@ const App = () => {
     // fetchDirectoryState,
   } = useDirectory();
 
+  console.log(cloudTree, userTree && userTree[0]);
+
   useEffect(() => {
     (async () => {
       const dirBase = "http://127.0.0.1:5500/samples";
       const index = await fetchCloudDirectory(`${dirBase}/index.json`, {
         root: true,
       });
-      let preffixed = {};
-      for (const key in index.content) {
-        preffixed[dirBase + "/" + key] = index.content[key];
-      }
+      let preffixed = {
+        [dirBase]: {
+          content: index.content,
+          directory: dirBase,
+          type: "directory",
+        },
+      };
       setCloudTree({
         content: preffixed,
         root: true,
