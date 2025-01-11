@@ -1,6 +1,9 @@
-import React, { useState, useMemo, useRef } from "react";
+import React, { useMemo } from "react";
 import styles from "./StackedTree.module.css";
 import Player from "../Player/Player";
+import { useBreadcrumbs, useDirectoryState } from "./hooks";
+import color from "../../services/color";
+import Button from "../Button/Button";
 
 const StackedTree = ({
   initialTree,
@@ -9,102 +12,34 @@ const StackedTree = ({
   root,
   loading,
 }) => {
-  let keys = Object.keys(initialTree?.content || {});
+  const {
+    limit,
+    setLimit,
+    opacity,
+    handleDirectoryClick,
+    handleClose,
+    rootDirectory,
+  } = useDirectoryState(initialTree, fetchDirectory, setTree);
 
-  // sort keys by highlight if exists
-  if (initialTree?.highlight) {
-    keys = keys.sort((a, b) => {
-      const name = initialTree?.highlight?.split("/")?.at(-1);
-      if (name === a) return -1;
-      if (name === b) return 1;
-      return 0;
-    });
-  }
+  const segments = useBreadcrumbs(initialTree, rootDirectory);
 
-  const [limit, setLimit] = useState(10);
-  const [opacity, setOpacity] = useState(1); // Track animation direction
-  const listRef = useRef(null);
-
-  // Track the root directory for consistent path slicing
-  const rootDirectory = useRef(initialTree.directory);
-
-  // Build breadcrumb segments with full paths
-  const segments = useMemo(() => {
-    const fullPath = initialTree?.directory?.split("/") || [];
-    const indexOfRoot = fullPath.indexOf(
-      rootDirectory.current?.split("/")?.at(-1) || []
-    );
-    const validSegments = fullPath.slice(indexOfRoot);
-    return validSegments.map((segment, index) => {
-      return {
-        title: segment,
-        path:
-          index === 0
-            ? rootDirectory.current
-            : `${rootDirectory.current}/${validSegments
-                .slice(1, index + 1) // Take all segments up to and including the current one
-                .join("/")}`,
-      };
-    });
-  }, [initialTree.directory]);
-
-  if (!initialTree.directory) {
-    return null;
-  }
-
-  const handleBreadcrumbClick = async (segment, idx) => {
-    const index = await fetchDirectory(`${segment.path}/index.json`);
-
-    setTree(initialTree, {
-      ...index,
-      directory: segment.path,
-      root: false,
-    });
-  };
-
-  const handleDirectoryClick = async (key) => {
-    const path = root ? key : `${initialTree.directory}/${key}`;
-    const index = await fetchDirectory(`${path}/index.json`);
-    setTree(initialTree, {
-      ...index,
-      directory: path,
-      root: false,
-    });
-  };
-
-  const handleClose = async () => {
-    const root = initialTree.directory === rootDirectory.current;
-    const path = root
-      ? rootDirectory.current
-      : initialTree.directory.split("/").slice(0, -1).join("/");
-    const index = await fetchDirectory(`${path}/index.json`);
-
-    // close should go back to the previous directory
-    if (root) {
-      setTree(initialTree, {
-        content: {
-          [rootDirectory.current]: {
-            type: "directory",
-          },
-        },
-        directory: rootDirectory.current,
-        root: true,
+  const keys = useMemo(() => {
+    let sortedKeys = Object.keys(initialTree?.content || {});
+    if (initialTree?.highlight) {
+      sortedKeys = sortedKeys.sort((a, b) => {
+        const name = initialTree?.highlight?.split("/")?.at(-1);
+        if (name === a) return -1;
+        if (name === b) return 1;
+        return 0;
       });
-      setOpacity(1);
-      return;
     }
-    setTree(initialTree, {
-      content: index.content,
-      directory: root ? initialTree.directory : path,
-      root,
-    });
-  };
+    return sortedKeys;
+  }, [initialTree]);
 
-  // Function to assign random colors
-  const getRandomColor = (idx) => color.palette[idx % color.palette.length];
+  if (!initialTree.directory) return null;
 
   return (
-    <div class={styles["stacked-tree"]}>
+    <div className={styles["stacked-tree"]}>
       {!root && (
         <nav className={styles["breadcrumb-container"]}>
           <button onClick={handleClose} className={styles["breadcrumb-close"]}>
@@ -122,31 +57,29 @@ const StackedTree = ({
             </svg>
           </button>
           {segments.map((segment, idx) => (
-            <>
-              <span key={segment.path} className={styles.breadcrumb}>
+            <React.Fragment key={segment.path}>
+              <span className={styles.breadcrumb}>
                 <button
-                  onClick={() => handleBreadcrumbClick(segment, idx)}
+                  onClick={() => handleDirectoryClick(segment.path, idx)}
                   className={styles["breadcrumb"]}
                   style={{
-                    color: getRandomColor(idx),
+                    color: color.getRandomColor(idx),
                   }}
                 >
                   {segment.title}
                 </button>
               </span>
               {idx < segments.length - 1 && <span>/</span>}
-            </>
+            </React.Fragment>
           ))}
         </nav>
       )}
       {loading && <div>Loading...</div>}
-      {/* Apply animation classes */}
-      <div class={styles["directory-tree-container"]}>
+      <div className={styles["directory-tree-container"]}>
         <ul
           className={`${styles["directory-tree"]} ${
             styles[`opacity-${opacity}`]
           }`}
-          ref={listRef}
         >
           {keys.slice(0, limit).map((key) => {
             const node = initialTree.content[key];
@@ -157,8 +90,7 @@ const StackedTree = ({
                 <li
                   key={key}
                   className={styles["directory"]}
-                  onClick={() => handleDirectoryClick(key)}
-                  data-closed={root}
+                  onClick={() => handleDirectoryClick(key, root)}
                 >
                   {root ? key.split("/").at(-1) : key}
                 </li>
@@ -183,9 +115,9 @@ const StackedTree = ({
             return null;
           })}
           {keys.length > limit && (
-            <button onClick={() => setLimit((prev) => prev + 10)}>
+            <Button onClick={() => setLimit((prev) => prev + 10)}>
               Show More
-            </button>
+            </Button>
           )}
         </ul>
       </div>

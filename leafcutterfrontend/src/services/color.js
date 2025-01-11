@@ -12,8 +12,7 @@ const palette = [
 export default color = {
   // Function to assign random colors
   getRandomColor: (idx) => {
-    if (idx) {
-      console.log("idx", idx, idx % palette.length);
+    if (typeof idx === "number") {
       return palette[idx % palette.length];
     }
     // Generate random number to return random color
