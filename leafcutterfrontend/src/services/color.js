@@ -9,7 +9,7 @@ const palette = [
   "#8D99AE", // Muted purple-gray
 ];
 
-export default color = {
+const color = {
   // Function to assign random colors
   getRandomColor: (idx) => {
     if (typeof idx === "number") {
@@ -20,3 +20,5 @@ export default color = {
   },
   palette,
 };
+
+export default color;

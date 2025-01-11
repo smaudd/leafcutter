@@ -1,9 +1,10 @@
 import React, { useMemo } from "react";
 import styles from "./StackedTree.module.css";
 import Player from "../Player/Player";
-import { useBreadcrumbs, useDirectoryState } from "./hooks";
 import color from "../../services/color";
 import Button from "../Button/Button";
+import useDirectoryState from "./hooks/useDirectoryState";
+import useBreadcrumbs from "./hooks/useBreadcrumbs";
 
 const StackedTree = ({
   initialTree,
@@ -17,7 +18,7 @@ const StackedTree = ({
     setLimit,
     opacity,
     handleDirectoryClick,
-    handleClose,
+    handlePop,
     rootDirectory,
   } = useDirectoryState(initialTree, fetchDirectory, setTree);
 
@@ -42,7 +43,11 @@ const StackedTree = ({
     <div className={styles["stacked-tree"]}>
       {!root && (
         <nav className={styles["breadcrumb-container"]}>
-          <button onClick={handleClose} className={styles["breadcrumb-close"]}>
+          <button
+            onClick={handlePop}
+            className={styles["breadcrumb-close"]}
+            data-testid="breadcrumb-pop"
+          >
             <svg
               width="1.5rem"
               height="1.5rem"
@@ -115,7 +120,7 @@ const StackedTree = ({
             return null;
           })}
           {keys.length > limit && (
-            <Button onClick={() => setLimit((prev) => prev + 10)}>
+            <Button onClick={() => setLimit((prev) => prev + limit)}>
               Show More
             </Button>
           )}

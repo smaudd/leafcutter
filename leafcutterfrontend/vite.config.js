@@ -23,4 +23,11 @@ export default defineConfig({
       generateScopedName: "[name]_[local]_[hash:base64:2]", // Customize class names
     },
   },
+  test: {
+    globals: true, // This will enable you to use global functions like `describe`, `it`, `expect` etc.
+    environment: "jsdom", // Specify the environment (use 'node' for Node.js testing)
+    coverage: {
+      provider: "c8", // You can use 'c8' for code coverage
+    },
+  },
 });
