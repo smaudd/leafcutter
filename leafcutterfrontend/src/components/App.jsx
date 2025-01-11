@@ -4,7 +4,6 @@ import useDirectory from "../hooks/useDirectory";
 import { bridge } from "../services/bridge";
 import { AudioProvider } from "../context/AudioProvider";
 import Button from "./Button/Button";
-import SearchBar from "./SearchBar/SearchBar";
 import StackedTree from "./StackedTree/StackedTree";
 
 const App = () => {
@@ -16,20 +15,21 @@ const App = () => {
     // fetchDirectoryState,
   } = useDirectory();
 
-  const {
-    tree: userTree,
-    setTree: setUserTree,
-    // loading,
-    fetchDirectory: fetchUserDirectory,
-    removeDirectory,
-    // fetchDirectoryState,
-  } = useDirectory();
+  // const {
+  //   tree: userTree,
+  //   setTree: setUserTree,
+  //   // loading,
+  //   fetchDirectory: fetchUserDirectory,
+  //   removeDirectory,
+  //   // fetchDirectoryState,
+  // } = useDirectory();
 
-  console.log(cloudTree, userTree && userTree[0]);
+  console.log(cloudTree);
 
   useEffect(() => {
     (async () => {
-      const dirBase = "http://127.0.0.1:5500/samples";
+      const dirBase =
+        "https://raw.githubusercontent.com/smaudd/demos/refs/heads/master";
       const index = await fetchCloudDirectory(`${dirBase}/index.json`, {
         root: true,
       });
@@ -45,26 +45,26 @@ const App = () => {
         root: true,
         directory: dirBase,
       });
-      const userLibraryConfig = await bridge.user.getLibraryConfig();
-      const directories = userLibraryConfig.directories.map((dir) =>
-        bridge.user.getDirectory(dir)
-      );
-      const trees = await Promise.all(directories);
-      setUserTree(
-        trees.map((tree, index) => {
-          const dirName = userLibraryConfig.directories[index];
-          return {
-            content: {
-              [dirName]: {
-                ...tree,
-                type: "directory",
-              },
-            },
-            root: true,
-            directory: dirName,
-          };
-        })
-      );
+      // const userLibraryConfig = await bridge.user.getLibraryConfig();
+      // const directories = userLibraryConfig.directories.map((dir) =>
+      //   bridge.user.getDirectory(dir)
+      // );
+      // const trees = await Promise.all(directories);
+      // setUserTree(
+      //   trees.map((tree, index) => {
+      //     const dirName = userLibraryConfig.directories[index];
+      //     return {
+      //       content: {
+      //         [dirName]: {
+      //           ...tree,
+      //           type: "directory",
+      //         },
+      //       },
+      //       root: true,
+      //       directory: dirName,
+      //     };
+      //   })
+      // );
       // setUserTree(
       //   await fetchUserDirectory("samples/index.json", { root: true })
       // );
@@ -112,13 +112,14 @@ const App = () => {
             setTree={(prev, next) => {
               setCloudTree(next);
             }}
+            loading={loading}
             // parent={tree.parent}
             root={cloudTree?.root}
             fetchDirectory={fetchCloudDirectory}
           />
         )}
       </div>
-      <h2>Local</h2>
+      {/* <h2>Local</h2>
       {userTree &&
         userTree.length > 0 &&
         userTree.map((tree) => (
@@ -179,7 +180,7 @@ const App = () => {
               fetchDirectory={fetchUserDirectory}
             />
           </>
-        ))}
+        ))} */}
     </AudioProvider>
   );
 };

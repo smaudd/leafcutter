@@ -27,7 +27,7 @@ export default function Player({ path, id, mode, highlight }) {
 
   async function handleDownload() {
     try {
-      const buffer = await bridge.data.getFile(path, mode);
+      const buffer = await bridge.data.getFile(path);
       const decodedBuffer = await audioContext.decodeAudioData(buffer);
       setAudioBuffer(decodedBuffer);
       renderWaveform(decodedBuffer);

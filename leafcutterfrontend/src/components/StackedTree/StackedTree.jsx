@@ -2,7 +2,13 @@ import React, { useState, useMemo, useRef } from "react";
 import styles from "./StackedTree.module.css";
 import Player from "../Player/Player";
 
-const StackedTree = ({ initialTree, fetchDirectory, setTree, root }) => {
+const StackedTree = ({
+  initialTree,
+  fetchDirectory,
+  setTree,
+  root,
+  loading,
+}) => {
   let keys = Object.keys(initialTree?.content || {});
 
   // sort keys by highlight if exists
@@ -48,62 +54,50 @@ const StackedTree = ({ initialTree, fetchDirectory, setTree, root }) => {
 
   const handleBreadcrumbClick = async (segment, idx) => {
     const index = await fetchDirectory(`${segment.path}/index.json`);
-    setOpacity(0);
 
-    listRef.current.ontransitionend = () => {
-      setTree(initialTree, {
-        ...index,
-        directory: segment.path,
-        root: false,
-      });
-      setOpacity(1);
-    };
+    setTree(initialTree, {
+      ...index,
+      directory: segment.path,
+      root: false,
+    });
   };
 
   const handleDirectoryClick = async (key) => {
-    setOpacity(0);
     const path = root ? key : `${initialTree.directory}/${key}`;
     const index = await fetchDirectory(`${path}/index.json`);
-    listRef.current.ontransitionend = () => {
-      setTree(initialTree, {
-        ...index,
-        directory: path,
-        root: false,
-      });
-      setOpacity(1);
-    };
+    setTree(initialTree, {
+      ...index,
+      directory: path,
+      root: false,
+    });
   };
 
   const handleClose = async () => {
-    setOpacity(0);
     const root = initialTree.directory === rootDirectory.current;
     const path = root
       ? rootDirectory.current
       : initialTree.directory.split("/").slice(0, -1).join("/");
     const index = await fetchDirectory(`${path}/index.json`);
 
-    listRef.current.ontransitionend = async () => {
-      // close should go back to the previous directory
-      if (root) {
-        setTree(initialTree, {
-          content: {
-            [rootDirectory.current]: {
-              type: "directory",
-            },
-          },
-          directory: rootDirectory.current,
-          root: true,
-        });
-        setOpacity(1);
-        return;
-      }
+    // close should go back to the previous directory
+    if (root) {
       setTree(initialTree, {
-        content: index.content,
-        directory: root ? initialTree.directory : path,
-        root,
+        content: {
+          [rootDirectory.current]: {
+            type: "directory",
+          },
+        },
+        directory: rootDirectory.current,
+        root: true,
       });
       setOpacity(1);
-    };
+      return;
+    }
+    setTree(initialTree, {
+      content: index.content,
+      directory: root ? initialTree.directory : path,
+      root,
+    });
   };
 
   // Function to assign random colors
@@ -145,6 +139,7 @@ const StackedTree = ({ initialTree, fetchDirectory, setTree, root }) => {
           ))}
         </nav>
       )}
+      {loading && <div>Loading...</div>}
       {/* Apply animation classes */}
       <div class={styles["directory-tree-container"]}>
         <ul

@@ -155,6 +155,7 @@ module.exports = class UserLibrary {
 
       for (const file of files) {
         const fullPath = this.path.join(dirPath, file);
+        const relativePath = this.path.relative(dir, fullPath);
         const stat = await this.fs.promises.stat(fullPath);
 
         if (stat.isFile() && isSupportedFile(file)) {
@@ -165,14 +166,18 @@ module.exports = class UserLibrary {
 
           index[file] = {
             name: file,
-            file: fullPath,
+            file: relativePath,
             type: "file",
             format: fileFormat,
             size: fileSize,
             checksum,
           };
         } else if (stat.isDirectory()) {
-          index[file] = { type: "directory", name: file, dir: fullPath };
+          index[file] = {
+            type: "directory",
+            name: file,
+            dir: `/${relativePath}`,
+          };
         }
       }
 

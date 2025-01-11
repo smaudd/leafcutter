@@ -33,8 +33,11 @@ module.exports = class Storage {
 
   async getIndex(_, pathname = "") {
     console.log("Getting index:", pathname);
+
     if (this.isURL(pathname)) {
-      return this.downloadIndex(pathname);
+      const index = await this.downloadIndex(pathname);
+      console.log("Getting index from URL----------:", index);
+      return index;
     }
 
     try {
@@ -85,7 +88,6 @@ module.exports = class Storage {
   }
 
   async downloadIndex(pathname) {
-    console.log(pathname);
     const response = await fetch(pathname);
     if (!response.ok) {
       throw new Error(`Failed to fetch file: ${response.statusText}`);
