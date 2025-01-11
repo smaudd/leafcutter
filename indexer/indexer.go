@@ -4,12 +4,14 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"io/fs"
 	"os"
 	"path/filepath"
 	"sort"
 	"strings"
+
 	"github.com/sqweek/dialog"
 )
 
@@ -272,17 +274,31 @@ func contains(slice []string, item string) bool {
 }
 
 func main() {
-	// dir := "/Users/work/Documents/samples_test" // Change this to your desired directory
-    selectedFolder, err := selectFolderPrompt()
-    if err != nil {
-        fmt.Println("Error:", err)
-        return
-    }
+	// Parse command-line flags
+	dirFlag := flag.String("dirname", "", "Directory to index")
+	flag.Parse()
+
+	var selectedFolder string
+	var err error
+
+	// If --dirname flag is passed, use that directory, else prompt user
+	if *dirFlag != "" {
+		selectedFolder = *dirFlag
+	} else {
+		// If no argument is provided, prompt the user to select a folder
+		selectedFolder, err = selectFolderPrompt()
+		if err != nil {
+			fmt.Println("Error:", err)
+			return
+		}
+	}
+
+	// Create a new indexing manager (replace with your actual manager logic)
 	manager := NewIndexingManager()
 
+	// Call the generateIndexDirectory method
 	dirErr := manager.generateIndexDirectory(selectedFolder, selectedFolder)
-
 	if dirErr != nil {
-		fmt.Printf("Error: %v\n", err)
+		fmt.Printf("Error: %v\n", dirErr)
 	}
 }
