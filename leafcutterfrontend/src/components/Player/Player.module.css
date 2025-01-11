@@ -12,9 +12,9 @@
   width: 100%;
 }
 
-.header {
-  /* grid-template-columns: 1fr 1fr; */
-}
+/* .header {
+  grid-template-columns: 1fr 1fr;
+} */
 
 .title {
   padding: 0.5rem;

@@ -248,7 +248,7 @@ module.exports = class UserLibrary {
     });
 
     // Paginate the global index
-    const pageSize = 10;
+    const pageSize = 100;
     const pages = Math.ceil(globalIndex.length / pageSize);
     // check if seach directory exists
     const searchDir = this.path.join(dir, "_search");
@@ -264,7 +264,12 @@ module.exports = class UserLibrary {
       await this.fs.promises.writeFile(
         paginatedIndexPath,
         JSON.stringify(
-          { content: paginatedIndex, next: i < pages - 1, total: pages },
+          {
+            content: paginatedIndex,
+            next: i < pages - 1,
+            totalPages: pages,
+            totalCount: globalIndex.length,
+          },
           null,
           2
         )

@@ -5,6 +5,7 @@ import { bridge } from "../services/bridge";
 import { AudioProvider } from "../context/AudioProvider";
 import Button from "./Button/Button";
 import StackedTree from "./StackedTree/StackedTree";
+import SearchBar from "./SearchBar/SearchBar";
 
 const App = () => {
   const {
@@ -107,16 +108,32 @@ const App = () => {
           parent="https://couponsb.fra1.digitaloceanspaces.com/samples"
         /> */}
         {cloudTree && (
-          <StackedTree
-            initialTree={cloudTree}
-            setTree={(prev, next) => {
-              setCloudTree(next);
-            }}
-            loading={loading}
-            // parent={tree.parent}
-            root={cloudTree?.root}
-            fetchDirectory={fetchCloudDirectory}
-          />
+          <>
+            <SearchBar
+              basePath={cloudTree.directory}
+              onClickElement={async (element) => {
+                const path = element.file.split("/").slice(0, -1).join("/");
+                const index = await fetchCloudDirectory(`${path}/index.json`);
+                setCloudTree({
+                  ...index,
+                  directory: path,
+                  root: tree.directory === path,
+                  highlight: element.file,
+                });
+                console.log("Element clicked", element, path);
+              }}
+            />
+            <StackedTree
+              initialTree={cloudTree}
+              setTree={(prev, next) => {
+                setCloudTree(next);
+              }}
+              loading={loading}
+              // parent={tree.parent}
+              root={cloudTree?.root}
+              fetchDirectory={fetchCloudDirectory}
+            />
+          </>
         )}
       </div>
       {/* <h2>Local</h2>
