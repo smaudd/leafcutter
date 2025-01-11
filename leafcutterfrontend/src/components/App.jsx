@@ -25,8 +25,6 @@ const App = () => {
   //   // fetchDirectoryState,
   // } = useDirectory();
 
-  console.log(cloudTree);
-
   useEffect(() => {
     (async () => {
       const dirBase =
