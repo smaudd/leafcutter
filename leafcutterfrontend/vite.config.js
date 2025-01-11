@@ -28,6 +28,8 @@ export default defineConfig({
     environment: "jsdom", // Specify the environment (use 'node' for Node.js testing)
     coverage: {
       provider: "c8", // You can use 'c8' for code coverage
+      reporter: ["text", "html"],
     },
+    // vitest.config.js
   },
 });

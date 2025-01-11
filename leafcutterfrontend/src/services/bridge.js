@@ -1,5 +1,3 @@
-import { get } from "http";
-
 export const _ = {
   // Versions API
   getVersions: () => ({
