@@ -3,25 +3,26 @@ import { vi } from "vitest";
 import useDirectoryState from "./useDirectoryState";
 
 describe("useDirectoryState", () => {
+  const tree = { directory: "/root" };
+  const limit = 10;
+
   it("should initialize limit and opacity correctly", () => {
-    const initialTree = { directory: "/root" };
     const fetchDirectory = vi.fn();
     const setTree = vi.fn();
 
     const { result } = renderHook(() =>
-      useDirectoryState(initialTree, fetchDirectory, setTree)
+      useDirectoryState({ tree, fetchDirectory, setTree, limit })
     );
 
     expect(result.current.limit).toBe(10); // default limit
     expect(result.current.opacity).toBe(1); // default opacity
   });
   it("should update directory and call setTree on directory click", async () => {
-    const initialTree = { directory: "/root" };
     const fetchDirectory = vi.fn().mockResolvedValue({ content: {} });
     const setTree = vi.fn();
 
     const { result } = renderHook(() =>
-      useDirectoryState(initialTree, fetchDirectory, setTree)
+      useDirectoryState({ tree, fetchDirectory, setTree, limit })
     );
 
     await act(async () => {
@@ -30,7 +31,7 @@ describe("useDirectoryState", () => {
 
     expect(fetchDirectory).toHaveBeenCalledWith("/root/folder1/index.json");
     expect(setTree).toHaveBeenCalledWith(
-      initialTree,
+      tree,
       expect.objectContaining({
         directory: "/root/folder1",
         root: false,
@@ -39,12 +40,12 @@ describe("useDirectoryState", () => {
   });
 
   it("should update the directory correctly when calling handlePop", async () => {
-    const initialTree = { directory: "/root/folder1" };
     const fetchDirectory = vi.fn().mockResolvedValue({ content: {} });
     const setTree = vi.fn();
+    const limit = 10;
 
     const { result } = renderHook(() =>
-      useDirectoryState(initialTree, fetchDirectory, setTree)
+      useDirectoryState({ tree, fetchDirectory, setTree, limit })
     );
 
     // Call handlePop to go one level up
@@ -53,16 +54,14 @@ describe("useDirectoryState", () => {
     });
 
     // Check if fetchDirectory is called with the correct path for the parent directory
-    expect(fetchDirectory).toHaveBeenCalledWith(
-      initialTree.directory + "/index.json"
-    );
+    expect(fetchDirectory).toHaveBeenCalledWith(tree.directory + "/index.json");
 
     // Check if setTree is called with the updated directory
     expect(setTree).toHaveBeenCalledWith(
-      initialTree,
+      tree,
       expect.objectContaining({
         content: {
-          [initialTree.directory]: {
+          [tree.directory]: {
             type: "directory",
           },
         },
@@ -71,12 +70,11 @@ describe("useDirectoryState", () => {
   });
 
   it("should remain at root if already at root when calling handlePop", async () => {
-    const initialTree = { directory: "/root" };
     const fetchDirectory = vi.fn().mockResolvedValue({ content: {} });
     const setTree = vi.fn();
 
     const { result } = renderHook(() =>
-      useDirectoryState(initialTree, fetchDirectory, setTree)
+      useDirectoryState({ tree, fetchDirectory, setTree, limit })
     );
 
     // Call handlePop when we're already at root
@@ -89,7 +87,7 @@ describe("useDirectoryState", () => {
 
     // Check if setTree is called with the root directory
     expect(setTree).toHaveBeenCalledWith(
-      initialTree,
+      tree,
       expect.objectContaining({
         directory: "/root", // It should stay at root
         root: true,

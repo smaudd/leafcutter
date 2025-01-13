@@ -6,6 +6,8 @@ import { AudioProvider } from "../context/AudioProvider";
 import Button from "./Button/Button";
 import StackedTree from "./StackedTree/StackedTree";
 import SearchBar from "./SearchBar/SearchBar";
+import Loader from "./Loader/Loader";
+import Player from "./Player/Player";
 
 const App = () => {
   const {
@@ -96,33 +98,19 @@ const App = () => {
           ]);
         }}
       >
-        Get directory
+        Add index
       </Button>
       <div>
         {/* <DirectoryTree
-          initialTree={cloudTree}
+          tree={cloudTree}
           fetchDirectory={fetchCloudDirectory}
           removeDirectory={removeDirectory}
           parent="https://couponsb.fra1.digitaloceanspaces.com/samples"
         /> */}
         {cloudTree && (
           <>
-            <SearchBar
-              basePath={cloudTree.directory}
-              onClickElement={async (element) => {
-                const path = element.file.split("/").slice(0, -1).join("/");
-                const index = await fetchCloudDirectory(`${path}/index.json`);
-                setCloudTree({
-                  ...index,
-                  directory: path,
-                  root: tree.directory === path,
-                  highlight: element.file,
-                });
-                console.log("Element clicked", element, path);
-              }}
-            />
             <StackedTree
-              initialTree={cloudTree}
+              tree={cloudTree}
               setTree={(prev, next) => {
                 setCloudTree(next);
               }}
@@ -130,6 +118,24 @@ const App = () => {
               // parent={tree.parent}
               root={cloudTree?.root}
               fetchDirectory={fetchCloudDirectory}
+            />
+            <SearchBar
+              basePath={cloudTree.directory}
+              onClickElement={async (element) => {
+                const path = element.file.split("/").slice(0, -1).join("/");
+                const index = await fetchCloudDirectory(
+                  `https://raw.githubusercontent.com/smaudd/demos/refs/heads/master/${encodeURIComponent(
+                    path
+                  )}/index.json`
+                );
+                setCloudTree({
+                  ...index,
+                  directory: `https://raw.githubusercontent.com/smaudd/demos/refs/heads/master${path}`,
+                  root: cloudTree.directory === path,
+                  highlight: element.file,
+                });
+                console.log("Element clicked", element, path);
+              }}
             />
           </>
         )}
@@ -178,7 +184,7 @@ const App = () => {
             }
 
             <StackedTree
-              initialTree={tree}
+              tree={tree}
               setTree={(prev, next) => {
                 // update only the tree that was changed
                 setUserTree((prevTree) => {

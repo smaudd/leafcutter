@@ -154,10 +154,11 @@ export const bridge = {
     },
     getFile: async (file) => {
       try {
-        const url = `https://raw.githubusercontent.com/smaudd/demos/refs/heads/master/${file}`;
+        const url = `https://raw.githubusercontent.com/smaudd/demos/refs/heads/master/${encodeURIComponent(
+          file
+        )}`;
         const response = await fetch(url);
         if (!response.ok) throw new Error("Failed to fetch file");
-        console.log("Downloaded file from:", url);
         return response.arrayBuffer(); // Assuming a file download
       } catch (error) {
         console.error("Error getting file:", error);

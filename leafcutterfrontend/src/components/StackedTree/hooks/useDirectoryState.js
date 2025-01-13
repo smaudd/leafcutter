@@ -1,9 +1,14 @@
 import { useState, useRef, useCallback } from "react";
 
 // Hook to manage the current directory's state
-const useDirectoryState = (initialTree, fetchDirectory, setTree) => {
-  const rootDirectory = useRef(initialTree.directory);
-  const [limit, setLimit] = useState(10);
+const useDirectoryState = ({
+  tree,
+  fetchDirectory,
+  setTree,
+  limit: _limit,
+}) => {
+  const rootDirectory = useRef(tree.directory);
+  const [limit, setLimit] = useState(_limit);
   const [opacity, setOpacity] = useState(1);
 
   const handleDirectoryClick = useCallback(
@@ -11,33 +16,33 @@ const useDirectoryState = (initialTree, fetchDirectory, setTree) => {
       let path = key;
 
       if (!root) {
-        path = `${initialTree.directory}/${key}`;
+        path = `${tree.directory}/${key}`;
       }
 
       const index = await fetchDirectory(`${path}/index.json`);
-      setTree(initialTree, {
+      setTree(tree, {
         ...index,
         directory: path,
         root: false,
       });
     },
-    [initialTree, fetchDirectory, setTree]
+    [tree, fetchDirectory, setTree]
   );
 
   const handlePop = useCallback(async () => {
     let path = "";
-    const isRootDirectory = initialTree.directory === rootDirectory.current;
+    const isRootDirectory = tree.directory === rootDirectory.current;
 
     if (isRootDirectory) {
       path = rootDirectory.current; // Stay at the root directory
     } else {
-      path = initialTree.directory.split("/").slice(0, -1).join("/"); // Go up one level
+      path = tree.directory.split("/").slice(0, -1).join("/"); // Go up one level
     }
 
     const index = await fetchDirectory(`${path}/index.json`);
 
     if (isRootDirectory) {
-      setTree(initialTree, {
+      setTree(tree, {
         content: {
           [rootDirectory.current]: {
             type: "directory",
@@ -50,12 +55,12 @@ const useDirectoryState = (initialTree, fetchDirectory, setTree) => {
       return;
     }
 
-    setTree(initialTree, {
+    setTree(tree, {
       content: index.content,
       directory: path,
       root: false,
     });
-  }, [initialTree, fetchDirectory, setTree]);
+  }, [tree, fetchDirectory, setTree]);
 
   return {
     limit,

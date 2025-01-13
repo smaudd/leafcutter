@@ -12,7 +12,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/sqweek/dialog"
+	"github.com/ncruces/zenity"
 )
 
 type FileIndex struct {
@@ -30,16 +30,39 @@ type IndexingManager struct {
 	ExcludedFiles    []string
 }
 
-
 func selectFolderPrompt() (string, error) {
 	// Show the initial message dialog to inform the user
-	dialog.Message("Please select a folder to index").Title("Folder Selection").Info()
+	// dialog.Message("Please select a folder to index").Title("Folder Selection").Info()
+	question := zenity.Question("Please select a folder to index",
+		zenity.Title("Question"),
+		zenity.QuestionIcon)
+
+	if question != nil {
+		return "", fmt.Errorf("dialog canceled")
+	}
+	fmt.Println("Question:", question)
 
 	// Open the folder selection dialog after the message
-	dirPath, err := dialog.Directory().Title("Select Folder to Index").Browse()
+	dirPath, err := zenity.SelectFile(
+		zenity.Filename(``),
+		zenity.Directory())
 	if err != nil {
 		return "", fmt.Errorf("error selecting folder: %v", err)
 	}
+
+	confirmation := zenity.Question("Are you sure you want to index this folder?"+dirPath,
+		zenity.Title("Question"),
+		zenity.QuestionIcon)
+
+	if confirmation != nil {
+		selectFolderPrompt()
+		return "", fmt.Errorf("dialog canceled")
+	}
+
+	zenity.Notify("Folder selected: "+dirPath, zenity.Title("Warning"),
+		zenity.InfoIcon)
+	zenity.Notify("Processing folder wait a few minutes", zenity.Title("Warning"),
+		zenity.InfoIcon)
 
 	// Check if the directory exists
 	if _, err := os.Stat(dirPath); os.IsNotExist(err) {
@@ -70,55 +93,55 @@ func (im *IndexingManager) isSupportedFile(file string) bool {
 }
 
 func (im *IndexingManager) generateIndex(dir string, rootDir string) (map[string]FileIndex, error) {
-    index := make(map[string]FileIndex)
+	index := make(map[string]FileIndex)
 
-    files, err := os.ReadDir(dir)
-    if err != nil {
-        return nil, err
-    }
+	files, err := os.ReadDir(dir)
+	if err != nil {
+		return nil, err
+	}
 
-    // Remove the root directory part from the path for relative calculation
+	// Remove the root directory part from the path for relative calculation
 
-    for _, file := range files {
-        fullPath := filepath.Join(dir, file.Name())
-        relativePath, _ := filepath.Rel(rootDir, fullPath) // Compute relative path from root directory
+	for _, file := range files {
+		fullPath := filepath.Join(dir, file.Name())
+		relativePath, _ := filepath.Rel(rootDir, fullPath) // Compute relative path from root directory
 
-        // Skip hidden folders (like .git) and the _search folder inside root
-        if file.IsDir() && (strings.HasPrefix(file.Name(), ".") || file.Name() == "_search" || strings.Contains(file.Name(), ".git")) {
-            continue
-        }
+		// Skip hidden folders (like .git) and the _search folder inside root
+		if file.IsDir() && (strings.HasPrefix(file.Name(), ".") || file.Name() == "_search" || strings.Contains(file.Name(), ".git")) {
+			continue
+		}
 
-        if file.IsDir() {
-            index[file.Name()] = FileIndex{
-                Type: "directory",
-                Name: file.Name(),
-                Dir:  "/" + relativePath,  // Correct for directories
-            }
-        } else if im.isSupportedFile(file.Name()) {
-            fileBuffer, err := os.ReadFile(fullPath)
-            if err != nil {
-                return nil, err
-            }
-            checksum := im.calculateChecksum(fileBuffer)
+		if file.IsDir() {
+			index[file.Name()] = FileIndex{
+				Type: "directory",
+				Name: file.Name(),
+				Dir:  "/" + relativePath, // Correct for directories
+			}
+		} else if im.isSupportedFile(file.Name()) {
+			fileBuffer, err := os.ReadFile(fullPath)
+			if err != nil {
+				return nil, err
+			}
+			checksum := im.calculateChecksum(fileBuffer)
 
-            info, err := os.Stat(fullPath)
-            if err != nil {
-                return nil, err
-            }
+			info, err := os.Stat(fullPath)
+			if err != nil {
+				return nil, err
+			}
 
-            // Dynamically build the file path based on the root directory
-            filePath := "/" + relativePath
+			// Dynamically build the file path based on the root directory
+			filePath := "/" + relativePath
 
-            index[file.Name()] = FileIndex{
-                Type:     "file",
-                Name:     file.Name(),
-                File:     filePath, // Dynamically set the file path
-                Format:   strings.TrimPrefix(filepath.Ext(file.Name()), "."),
-                Size:     info.Size(),
-                Checksum: checksum,
-            }
-        }
-    }
+			index[file.Name()] = FileIndex{
+				Type:     "file",
+				Name:     file.Name(),
+				File:     filePath, // Dynamically set the file path
+				Format:   strings.TrimPrefix(filepath.Ext(file.Name()), "."),
+				Size:     info.Size(),
+				Checksum: checksum,
+			}
+		}
+	}
 
 	// Correct file path for the root directory
 	indexPath := filepath.Join(dir, "index.json")
@@ -143,8 +166,6 @@ func (im *IndexingManager) generateIndex(dir string, rootDir string) (map[string
 	return index, nil
 
 }
-
-
 
 // Recursively process directories and index files
 func (im *IndexingManager) processDirectoryRecursively(dir string, globalIndex *[]FileIndex, rootDir string) error {
@@ -194,7 +215,6 @@ func (im *IndexingManager) calculateTopLevelChecksum(dir string) (string, error)
 	return im.calculateChecksum([]byte(joinedNames)), nil
 }
 
-// Generate an index directory with pagination
 func (im *IndexingManager) generateIndexDirectory(dir string, rootDir string) error {
 	checksumPath := filepath.Join(dir, "top_level_checksum.txt")
 
@@ -220,6 +240,17 @@ func (im *IndexingManager) generateIndexDirectory(dir string, rootDir string) er
 	}
 
 	var globalIndex []FileIndex
+
+	// Add root directory to index
+	rootIndex, err := im.generateIndex(dir, rootDir)
+	if err != nil {
+		return err
+	}
+	for _, v := range rootIndex {
+		globalIndex = append(globalIndex, v)
+	}
+
+	// Recursively process directories
 	err = im.processDirectoryRecursively(dir, &globalIndex, rootDir)
 	if err != nil {
 		return err
@@ -242,10 +273,10 @@ func (im *IndexingManager) generateIndexDirectory(dir string, rootDir string) er
 		paginatedIndexPath := filepath.Join(searchDir, fmt.Sprintf("%d.json", i+1))
 
 		pageData, err := json.MarshalIndent(map[string]interface{}{
-			"content":     paginatedIndex,
-			"next":        i < totalPages-1,
-			"totalPages":  totalPages,
-			"totalCount":  len(globalIndex),
+			"content":    paginatedIndex,
+			"next":       i < totalPages-1,
+			"totalPages": totalPages,
+			"totalCount": len(globalIndex),
 		}, "", "  ")
 		if err != nil {
 			return err
@@ -298,7 +329,14 @@ func main() {
 
 	// Call the generateIndexDirectory method
 	dirErr := manager.generateIndexDirectory(selectedFolder, selectedFolder)
+
 	if dirErr != nil {
 		fmt.Printf("Error: %v\n", dirErr)
 	}
+
+	if *dirFlag == "" {
+		zenity.Notify("Folder "+selectedFolder+" was indexed properly", zenity.Title("Warning"),
+			zenity.InfoIcon)
+	}
+
 }

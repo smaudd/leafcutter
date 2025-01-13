@@ -4,9 +4,11 @@ import { bridge } from "../../services/bridge";
 import styles from "./Player.module.css";
 import Button from "../Button/Button";
 import color from "../../services/color";
+import Loader from "../Loader/Loader";
 
 export default function Player({ path, id, mode, highlight }) {
   const [audioBuffer, setAudioBuffer] = useState(null);
+  const [loading, setLoading] = useState(false);
   const playheadPositionRef = useRef(null); // Playhead position
   const animationRef = useRef(null); // Ref for animation frame
   const startTimeRef = useRef(null); // Ref for playback start time
@@ -23,57 +25,91 @@ export default function Player({ path, id, mode, highlight }) {
     } else {
       stopPlayheadAnimation();
     }
-  }, [isPlaying, activePlayer]);
+    if (!loading) {
+      renderWaveform(audioBuffer);
+    }
+  }, [isPlaying, activePlayer, loading]);
 
   async function handleDownload() {
     try {
+      setLoading(true);
       const buffer = await bridge.data.getFile(path);
       const decodedBuffer = await audioContext.decodeAudioData(buffer);
       setAudioBuffer(decodedBuffer);
-      renderWaveform(decodedBuffer);
     } catch (error) {
       console.error("Error downloading file:", error);
+    } finally {
+      setLoading(false);
     }
   }
 
-  function renderWaveform(buffer) {
+  const waveformColors = useRef([]);
+
+  function renderWaveform(buffer, numBars = 80) {
     const canvas = canvasRef.current;
     if (!canvas || !buffer) return;
 
     const ctx = canvas.getContext("2d");
     const dpr = window.devicePixelRatio || 1;
-    const width = canvas.offsetWidth * dpr;
-    const height = canvas.offsetHeight * dpr;
 
+    // Set canvas resolution based on DPR
+    const width = canvas.getBoundingClientRect().width * dpr;
+    const height = canvas.getBoundingClientRect().height * dpr;
     canvas.width = width;
     canvas.height = height;
+
+    // Normalize the canvas display size
     ctx.scale(dpr, dpr);
 
-    ctx.webkitImageSmoothingEnabled = false;
-    ctx.mozImageSmoothingEnabled = false;
-    ctx.imageSmoothingEnabled = false;
+    // Disable image smoothing
+    ctx.imageSmoothingEnabled = true;
 
+    // Extract channel data and set up parameters
     const channelData = buffer.getChannelData(0);
-    const step = Math.ceil(channelData.length / canvas.offsetWidth);
+    const canvasWidth = canvas.offsetWidth; // Render width in logical pixels
+    const canvasHeight = canvas.offsetHeight; // Render height in logical pixels
+    const centerY = canvasHeight / 2; // Middle of the canvas
+    const step = Math.floor(channelData.length / numBars); // Samples per bar
 
-    ctx.clearRect(0, 0, width, height);
+    // Prepare for drawing
+    ctx.clearRect(0, 0, canvasWidth, canvasHeight);
     ctx.beginPath();
-    ctx.lineWidth = 2;
-    ctx.strokeStyle = "#1C274C"; // Waveform color
-    ctx.moveTo(0, canvas.offsetHeight / 2);
+    ctx.lineWidth = 2; // Bar width
+    ctx.strokeStyle = titleColor.current; // Waveform color
 
-    for (let i = 0; i < canvas.offsetWidth; i += 1) {
-      const min = Math.min(...channelData.slice(i * step, (i + 1) * step));
-      const max = Math.max(...channelData.slice(i * step, (i + 1) * step));
+    // Draw the waveform using bars (without rounded corners)
+    for (let x = 0; x < numBars; x++) {
+      const start = x * step;
+      const end = start + step;
 
-      const yMin = ((1 + min) * canvas.offsetHeight) / 2;
-      const yMax = ((1 + max) * canvas.offsetHeight) / 2;
+      // Calculate min and max values for the current step
+      let min = Infinity;
+      let max = -Infinity;
+      for (let i = start; i < end; i++) {
+        const sample = channelData[i] || 0;
+        if (sample < min) min = sample;
+        if (sample > max) max = sample;
+      }
 
-      ctx.lineTo(i, yMin);
-      ctx.lineTo(i, yMax);
+      // Scale waveform data to canvas height
+      const yPosMax = centerY - max * centerY; // Positive peak
+      const yPosMin = centerY - min * centerY; // Negative peak
+
+      // Calculate the bar height based on the full amplitude range (positive and negative)
+      const barHeight = yPosMax - yPosMin; // Full height of the bar
+
+      // Draw a bar (rectangle) for the current x position
+      const barWidth = canvasWidth / numBars; // Width of each bar
+      const xPos = x * barWidth; // X position for each bar
+      if (waveformColors.current[x] === undefined) {
+        waveformColors.current[x] = color.getRandomColor();
+      }
+      ctx.fillStyle = waveformColors.current[x];
+
+      // Draw the bar (no rounded corners)
+      ctx.fillRect(xPos, canvasHeight / 2, barWidth, barHeight); // Fill the bar
+      ctx.fillRect(xPos, canvasHeight / 2 - barHeight, barWidth, barHeight); // Fill the bar
     }
-
-    ctx.stroke();
   }
 
   function startPlayheadAnimation(offset = 0) {
@@ -182,12 +218,16 @@ export default function Player({ path, id, mode, highlight }) {
           {path.split("/").at(-1)}
         </h4>
       </div>
-      <div>
-        <canvas
-          ref={canvasRef}
-          className={styles["canvas"]}
-          onClick={handleCanvasClick}
-        ></canvas>
+      <div className={styles["waveform-container"]}>
+        {loading ? (
+          <Loader />
+        ) : (
+          <canvas
+            ref={canvasRef}
+            className={styles["canvas"]}
+            onClick={handleCanvasClick}
+          ></canvas>
+        )}
       </div>
       <Button onClick={() => play(audioBuffer, id)}>
         {isPlaying && isThisPlayerActive ? (

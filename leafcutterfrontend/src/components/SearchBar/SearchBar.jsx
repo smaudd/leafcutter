@@ -2,6 +2,7 @@ import { bridge } from "../../services/bridge";
 import { useState, useEffect, useRef } from "react";
 import Player from "../Player/Player";
 import styles from "./SearchBar.module.css";
+import Button from "../Button/Button";
 
 export default function SearchBar({ basePath, onClickElement }) {
   const [searchTerm, setSearchTerm] = useState("");
@@ -13,25 +14,23 @@ export default function SearchBar({ basePath, onClickElement }) {
   const observerRef = useRef(null);
   const lastResultRef = useRef(null);
   const debounceTimeoutRef = useRef(null); // Reference to store the debounce timeout ID
-
   // Initial data loading
   useEffect(() => {
     (async () => {
       setLoading(true);
       const index = await bridge.data.searchIndex(basePath, 1);
       if (index.next) {
-        const iterable = new Array(index.total)
-          .fill(null)
-          .map((_, i) => i)
+        const iterable = new Array(index.totalPages)
+          .fill(0)
+          .map((_, i) => i + 1)
           .slice(page);
         const results = [];
         for await (const i of iterable) {
           const index = await bridge.data.searchIndex(basePath, i);
           results.push(...index.content);
         }
-        setResults(results);
+        setResults(results.filter((result) => result.type === "file"));
         setLoading(false);
-        setShowResults(true);
       }
     })();
     // document.addEventListener("click", (e) => {
@@ -88,37 +87,47 @@ export default function SearchBar({ basePath, onClickElement }) {
     return result.name.toLowerCase().includes(searchTerm.toLowerCase());
   }
 
-  useEffect(() => {
-    observerRef.current.scrollIntoView({ behavior: "smooth" });
-  }, [showResults]);
-
   // Slice the results for the current page
   const shownResults = results.filter(filterResults);
   const resultsFrame = shownResults.slice(0, page * limit + limit);
   return (
-    <nav class={styles["search-bar"]}>
-      <input
-        type="text"
-        placeholder="Search..."
-        onChange={handleInputChange}
-        value={searchTerm}
-        className={styles["input"]}
-      />
+    <nav className={styles["search-bar"]}>
+      <div className={styles["search-bar-container"]}>
+        <input
+          type="text"
+          placeholder="Search..."
+          onChange={handleInputChange}
+          onFocus={() => {
+            setShowResults(true);
+          }}
+          value={searchTerm}
+          className={styles["input"]}
+        />
+        {shownResults.length > 0 && showResults && (
+          <Button
+            onClick={async () => {
+              setShowResults(false);
+              setSearchTerm("");
+            }}
+          >
+            x
+          </Button>
+        )}
+      </div>
       <div
         ref={observerRef}
         className={styles["container"]}
         data-results={showResults ? shownResults.length : 0}
       >
         {resultsFrame.map((result, index) => (
-          <div>
-            <button
+          <div key={result.file}>
+            <Button
               onClick={() => {
-                setShowResults(false);
                 onClickElement(result);
               }}
             >
-              Open on tree
-            </button>
+              Open folder
+            </Button>
             <Player key={result.name} path={result.file} id={index}>
               {result.name}
             </Player>

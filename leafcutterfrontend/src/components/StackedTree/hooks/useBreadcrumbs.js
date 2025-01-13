@@ -1,13 +1,13 @@
 import { useMemo } from "react";
 
-const useBreadcrumbs = (initialTree, rootDirectory) => {
+const useBreadcrumbs = (tree, rootDirectory) => {
   return useMemo(() => {
     // If directory is empty, return an empty array
-    if (!initialTree?.directory) {
+    if (!tree?.directory) {
       return [];
     }
 
-    const fullPath = initialTree?.directory.split("/") || [];
+    const fullPath = tree?.directory.split("/") || [];
     const rootDirectoryPath = rootDirectory.current?.split("/")?.at(-1) || [];
 
     // If the root directory path is not found, return an empty array
@@ -31,7 +31,7 @@ const useBreadcrumbs = (initialTree, rootDirectory) => {
         path,
       };
     });
-  }, [initialTree.directory, rootDirectory]);
+  }, [tree.directory, rootDirectory]);
 };
 
 export default useBreadcrumbs;

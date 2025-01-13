@@ -2,7 +2,7 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import StackedTree from "./StackedTree";
 import { describe, vi } from "vitest";
 
-const initialTree = {
+const tree = {
   directory: "/root",
   content: {
     folder1: { type: "directory" },
@@ -16,7 +16,7 @@ describe("StackedTree", () => {
   it("should render directory structure correctly", () => {
     render(
       <StackedTree
-        initialTree={initialTree}
+        tree={tree}
         fetchDirectory={fetchDirectory}
         setTree={setTree}
         root={false}
@@ -32,7 +32,7 @@ describe("StackedTree", () => {
   it("should render loading state", () => {
     render(
       <StackedTree
-        initialTree={initialTree}
+        tree={tree}
         fetchDirectory={fetchDirectory}
         setTree={setTree}
         root={false}
@@ -41,11 +41,11 @@ describe("StackedTree", () => {
     );
 
     // Check if the loading text is displayed
-    expect(screen.getByText("Loading...")).toBeDefined();
+    expect(screen.getByTestId("loader")).toBeDefined();
   });
 
   it("should navigate when clicking on a breadcrumb", () => {
-    const initialTree = {
+    const tree = {
       directory: "/root/folder",
       content: {
         subFolder1: { type: "directory" },
@@ -57,7 +57,7 @@ describe("StackedTree", () => {
 
     render(
       <StackedTree
-        initialTree={initialTree}
+        tree={tree}
         fetchDirectory={fetchDirectory}
         setTree={setTree}
         root={false}
@@ -75,14 +75,14 @@ describe("StackedTree", () => {
   });
 
   it("should show more button if directory has more than <limit> elements", () => {
-    const initialTree = {
+    const tree = {
       directory: "/root",
       content: {},
     };
 
     // Fill up contentShow more button will be displayed when there are more than <limit> directories
     for (let i = 0; i <= 20; i++) {
-      initialTree.content[`folder${i}`] = { type: "directory" };
+      tree.content[`folder${i}`] = { type: "directory" };
     }
 
     const fetchDirectory = vi.fn();
@@ -90,7 +90,7 @@ describe("StackedTree", () => {
 
     render(
       <StackedTree
-        initialTree={initialTree}
+        tree={tree}
         fetchDirectory={fetchDirectory}
         setTree={setTree}
         root={false}
@@ -98,7 +98,7 @@ describe("StackedTree", () => {
       />
     );
 
-    const showMoreButton = screen.getByText("Show More");
+    const showMoreButton = screen.getByTestId("show-more");
 
     // Verify if the limit has been increased (from 10 to 20 or whatever your limit is)
     expect(showMoreButton).toBeDefined();
@@ -106,22 +106,24 @@ describe("StackedTree", () => {
 
   it("should add more <limit> elements to the list if show more button is clicked", async () => {
     const elementCount = 20;
-    const initialTree = {
+    const tree = {
       directory: "/root",
       content: {},
     };
 
     // Fill up content; Show more button will be displayed when there are more than <limit> directories
     for (let i = 0; i <= elementCount; i++) {
-      initialTree.content[`folder${i}`] = { type: "directory" };
+      tree.content[`folder${i}`] = { type: "directory" };
     }
+
+    console.log(tree.content)
 
     const fetchDirectory = vi.fn();
     const setTree = vi.fn();
 
     render(
       <StackedTree
-        initialTree={initialTree}
+        tree={tree}
         fetchDirectory={fetchDirectory}
         setTree={setTree}
         root={false}
@@ -129,18 +131,18 @@ describe("StackedTree", () => {
       />
     );
 
-    const showMoreButton = screen.getByText("Show More");
-    fireEvent.click(showMoreButton); // Use fireEvent instead of .click()
+    const showMoreButton = screen.getByTestId("show-more");
+    fireEvent.click(showMoreButton);
 
     // Wait for the state update and DOM re-render
     await waitFor(() => {
-      const elements = screen.getAllByRole("listitem");
+      const elements = screen.getAllByTestId("dirnode");
       expect(elements.length).toBe(elementCount); // Assert that the number of elements is greater than the limit
     });
   });
 
   it("should call handlePop when the breadcrumb close button is clicked", () => {
-    const initialTree = {
+    const tree = {
       directory: "/root/folder1",
       content: { folder1: { type: "directory" } },
     };
@@ -149,7 +151,7 @@ describe("StackedTree", () => {
 
     render(
       <StackedTree
-        initialTree={initialTree}
+        tree={tree}
         fetchDirectory={fetchDirectory}
         setTree={setTree}
         root={false}

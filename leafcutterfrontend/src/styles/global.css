@@ -3,6 +3,7 @@
   font-family: monospace;
   user-select: none;
   letter-spacing: 0.12rem;
+  -webkit-tap-highlight-color: transparent;
 }
 
 body {
