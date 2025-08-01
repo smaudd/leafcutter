@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 
-const useBreadcrumbs = (tree, rootDirectory) => {
+const useBreadcrumbs = (tree, rootDir) => {
   return useMemo(() => {
     // If directory is empty, return an empty array
     if (!tree?.directory) {
@@ -8,10 +8,10 @@ const useBreadcrumbs = (tree, rootDirectory) => {
     }
 
     const fullPath = tree?.directory.split("/") || [];
-    const rootDirectoryPath = rootDirectory.current?.split("/")?.at(-1) || [];
+    const rootDirPath = rootDir?.split("/")?.at(-1) || [];
 
     // If the root directory path is not found, return an empty array
-    const indexOfRoot = fullPath.indexOf(rootDirectoryPath);
+    const indexOfRoot = fullPath.indexOf(rootDirPath);
     if (indexOfRoot === -1) {
       return [];
     }
@@ -19,11 +19,11 @@ const useBreadcrumbs = (tree, rootDirectory) => {
     const validSegments = fullPath.slice(indexOfRoot);
 
     return validSegments.map((segment, index) => {
-      let path = rootDirectory.current;
+      let path = rootDir;
+      const pathSegments = validSegments.slice(1, index + 1);
 
       if (index !== 0) {
-        const pathSegments = validSegments.slice(1, index + 1).join("/");
-        path = `${rootDirectory.current}/${pathSegments}`;
+        path = `${rootDir}/${pathSegments.join("/")}`;
       }
 
       return {
@@ -31,7 +31,7 @@ const useBreadcrumbs = (tree, rootDirectory) => {
         path,
       };
     });
-  }, [tree.directory, rootDirectory]);
+  }, [tree.directory, rootDir]);
 };
 
 export default useBreadcrumbs;

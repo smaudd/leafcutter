@@ -6,19 +6,14 @@ const useDirectoryState = ({
   fetchDirectory,
   setTree,
   limit: _limit,
+  rootDir,
 }) => {
-  const rootDirectory = useRef(tree.directory);
   const [limit, setLimit] = useState(_limit);
   const [opacity, setOpacity] = useState(1);
 
   const handleDirectoryClick = useCallback(
-    async (key, root) => {
+    async (key) => {
       let path = key;
-
-      if (!root) {
-        path = `${tree.directory}/${key}`;
-      }
-
       const index = await fetchDirectory(`${path}/index.json`);
       setTree(tree, {
         ...index,
@@ -31,10 +26,10 @@ const useDirectoryState = ({
 
   const handlePop = useCallback(async () => {
     let path = "";
-    const isRootDirectory = tree.directory === rootDirectory.current;
+    const isRootDirectory = tree.directory === rootDir;
 
     if (isRootDirectory) {
-      path = rootDirectory.current; // Stay at the root directory
+      path = rootDir; // Stay at the root directory
     } else {
       path = tree.directory.split("/").slice(0, -1).join("/"); // Go up one level
     }
@@ -44,11 +39,11 @@ const useDirectoryState = ({
     if (isRootDirectory) {
       setTree(tree, {
         content: {
-          [rootDirectory.current]: {
+          [rootDir]: {
             type: "directory",
           },
         },
-        directory: rootDirectory.current,
+        directory: rootDir,
         root: true,
       });
       setOpacity(1);
@@ -62,6 +57,19 @@ const useDirectoryState = ({
     });
   }, [tree, fetchDirectory, setTree]);
 
+  const handleClose = useCallback(() => {
+    // set root directory
+    setTree(tree, {
+      content: {
+        [rootDir]: {
+          type: "directory",
+        },
+      },
+      directory: rootDir,
+      root: true,
+    });
+  }, []);
+
   return {
     limit,
     setLimit,
@@ -69,7 +77,7 @@ const useDirectoryState = ({
     setOpacity,
     handleDirectoryClick,
     handlePop,
-    rootDirectory,
+    handleClose,
   };
 };
 

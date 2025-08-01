@@ -2,7 +2,7 @@ import { useState } from "react";
 import { bridge } from "../services/bridge";
 
 export default function useDirectory() {
-  const [tree, setTree] = useState(null);
+  const [trees, setTrees] = useState([]);
   const [loading, setLoading] = useState(false);
 
   const fetchDirectory = async (pathname) => {
@@ -20,13 +20,15 @@ export default function useDirectory() {
       setLoading(false);
     }
   };
-  const removeDirectory = async (dir) => {
-    try {
-      await bridge.user.removeDirectory(dir);
-      // fetchDirectoryState();
-    } catch (error) {
-      console.error("Error deleting directory:", error);
-    }
+
+  const removeDirectory = (dir) => {
+    // Remove dir from localstorage
+    const filtered = trees
+      .filter((tree) => tree.directory !== dir)
+      .map((tree) => tree.directory);
+    localStorage.setItem("repositories", JSON.stringify(filtered));
+    console.log(filtered, dir);
+    setTrees(filtered);
   };
-  return { tree, setTree, loading, fetchDirectory, removeDirectory };
+  return { trees, setTrees, loading, fetchDirectory, removeDirectory };
 }

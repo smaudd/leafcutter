@@ -91,14 +91,16 @@ export const bridge = {
     electron: "unknown",
   }),
 
-  // UI API (No fetch equivalent, leaving as placeholders)
+  getVersions: () => ({
+    node: window.versions.node(),
+    chrome: window.versions.chrome(),
+    electron: window.versions.electron(),
+  }),
+
+  // Electron API
   ui: {
-    startDrag: (file, mode) => {
-      console.warn("startDrag is not supported in fetchBridge");
-    },
-    endDrag: (file) => {
-      console.warn("endDrag is not supported in fetchBridge");
-    },
+    startDrag: (file, mode) => window.electron.startDrag(file, "cloud"),
+    endDrag: (file) => window.electron.endDrag(file),
   },
 
   user: {

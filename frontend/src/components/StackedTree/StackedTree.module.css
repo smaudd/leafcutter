@@ -9,7 +9,7 @@
   margin: 0;
   display: grid;
   gap: 1rem;
-  font-size: 1.5rem;
+  font-size: 1.1rem;
 }
 
 .directory-tree-container {
@@ -24,6 +24,18 @@
   opacity: 0;
 }
 
+svg {
+  transition: all 0.5s;
+}
+
+svg[data-expand="true"] {
+  transform: rotate(0deg);
+}
+
+svg[data-expand="false"] {
+  transform: rotate(180deg);
+}
+
 .stacked-tree {
   display: flex;
   flex-direction: column;
@@ -36,31 +48,43 @@
 }
 
 .breadcrumb-container {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: 2fr 0.1fr;
   gap: 0.5rem;
   align-items: center;
   position: sticky;
   top: 0;
   background-color: white;
   z-index: 2;
-  padding: 0.5rem;
   font-size: 1.5rem;
 }
+
+.breadcrumb-container > div {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.breadcrumb-container button {
+  align-self: flex-start;
+}
+
 .breadcrumb,
 .breadcrumb-close {
-  appearance: none;
   cursor: pointer;
+  appearance: none;
   border: none;
-  background-color: transparent;
-  padding: 0;
   font-size: 1rem;
   font-weight: bold;
+  background-color: transparent;
 }
 
 .breadcrumb button {
-  font-size: 1.5rem;
+  font-size: 1.2rem;
   text-align: left;
+  appearance: none;
+  border: none;
 }
 
 .breadcrumb-close {
@@ -72,6 +96,16 @@
   align-items: center;
 }
 
+.directory button {
+  width: 100%;
+  text-align: left;
+  appearance: none;
+  border: none;
+  padding: 0.25rem;
+  font-size: 1.2rem;
+  cursor: pointer;
+}
+
 .directory[data-closed="true"] {
   height: 1.5rem;
 }
@@ -80,6 +114,13 @@
   width: 100%;
   height: 1px;
   border-color: black;
+}
+
+.tree-title {
+  display: flex;
+  overflow: hidden;
+  font-size: 1.1rem;
+  font-weight: bold;
 }
 
 @media screen and (min-width: 768px) {
