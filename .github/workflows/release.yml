@@ -22,6 +22,11 @@ jobs:
         with:
           go-version: 1.21
 
+      - name: Install dependencies
+        run: |
+          cd indexer
+          go mod tidy
+
       - name: Build binary
         run: |
           mkdir -p dist
