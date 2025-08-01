@@ -1,0 +1,33 @@
+name: Folder Indexing
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+jobs:
+  index-folders:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.21"
+
+      - name: Build Indexer
+        run: go build -o indexer ./indexer/main.go
+
+      - name: Run Indexer
+        run: ./indexer --dirname ./samples
+
+      - name: Commit Indexed Files
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@github.com"
+          git add .
+          git diff --cached --quiet || git commit -m "Auto-index folders"
+          git push
