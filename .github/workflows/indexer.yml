@@ -29,7 +29,7 @@ jobs:
           go build -o ../indexer .
 
       - name: Run Indexer
-        run: ./indexer --dirname ./samples
+        run: ./indexer/indexer --dirname ./samples
 
       - name: Commit Indexed Files
         run: |
