@@ -10,6 +10,7 @@
   display: grid;
   gap: 1rem;
   font-size: 1.1rem;
+  width: 100%;
 }
 
 .directory-tree-container {
@@ -40,7 +41,7 @@ svg[data-expand="false"] {
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  margin: 1rem 0rem;
+  width: 100%;
 }
 
 .highlight {
@@ -101,9 +102,10 @@ svg[data-expand="false"] {
   text-align: left;
   appearance: none;
   border: none;
-  padding: 0.25rem;
+  padding: 0.5rem;
   font-size: 1.2rem;
   cursor: pointer;
+  background-color: transparent;
 }
 
 .directory[data-closed="true"] {

@@ -38,3 +38,14 @@ body {
   scrollbar-width: thin; /* Thin scrollbar */
   scrollbar-color: rgba(0, 0, 0, 0.2) transparent; /* Thumb and track colors */
 }
+
+.button {
+  appearance: none;
+  background-color: transparent;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  padding: 0.5rem;
+  font-size: 1rem;
+  border: 2px solid orange;
+}

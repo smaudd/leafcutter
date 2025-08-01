@@ -4,6 +4,7 @@ import { AudioProvider } from "../context/AudioProvider";
 import StackedTree from "./StackedTree/StackedTree";
 import SearchBar from "./SearchBar/SearchBar";
 import IndexManager from "./IndexManager/IndexManager";
+import styles from "./App.module.css";
 
 const App = () => {
   const [urls, setUrls] = useState([
@@ -15,9 +16,9 @@ const App = () => {
   return (
     <AudioProvider>
       <IndexManager urls={urls} onUrlsChange={setUrls} />
-      <div>
+      <div className={styles["trees-container"]}>
         {trees.map((tree) => (
-          <React.Fragment key={tree.directory}>
+          <div key={tree.directory} className={styles["tree-container"]}>
             <StackedTree
               tree={tree}
               setTree={(prev, next) => {
@@ -38,10 +39,12 @@ const App = () => {
             <button
               onClick={() => removeDirectory(tree.directory)}
               data-testid="clear"
+              className="button"
+              // className={styles["delete-button"]}
             >
-              Delete {tree.repoLabel || tree.directory}
+              Delete
             </button>
-          </React.Fragment>
+          </div>
         ))}
       </div>
       {/* <SearchBar
