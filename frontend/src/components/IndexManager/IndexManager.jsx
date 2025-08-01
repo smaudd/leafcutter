@@ -1,37 +1,21 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 
-const IndexManager = ({ onUrlsChange = () => {} }) => {
-  const [url, setUrl] = useState("");
-  const [savedUrls, setSavedUrls] = useState([]);
-
-  // Load URLs from localStorage when component mounts
-  useEffect(() => {
-    const storedUrls = [];
-    setSavedUrls(storedUrls);
-  }, []);
-
-  // Save URLs to localStorage and notify parent
-  const saveUrlsToLocalStorage = (urls) => {
-    localStorage.setItem("urls", JSON.stringify(urls));
-    setSavedUrls(urls);
-    if (onUrlsChange) onUrlsChange(urls); // Callback to parent
-  };
+const IndexManager = ({ urls = [], onUrlsChange = () => {} }) => {
+  const [inputUrl, setInputUrl] = useState("");
 
   // Add a new URL to the list
   const handleAddUrl = () => {
-    if (url.trim() && !savedUrls.includes(url)) {
-      const updatedUrls = [...savedUrls, url];
-      saveUrlsToLocalStorage(updatedUrls);
-      setUrl(""); // Clear input field
+    if (inputUrl.trim() && !urls.includes(inputUrl.trim())) {
+      const updatedUrls = [...urls, inputUrl.trim()];
+      onUrlsChange(updatedUrls);
+      setInputUrl(""); // Clear input field
     }
   };
 
-  // Delete a URL from the list
-  const handleDeleteUrl = (urlToDelete) => {
-    const updatedUrls = savedUrls.filter(
-      (savedUrl) => savedUrl !== urlToDelete
-    );
-    saveUrlsToLocalStorage(updatedUrls);
+  const handleKeyPress = (e) => {
+    if (e.key === "Enter") {
+      handleAddUrl();
+    }
   };
 
   return (
@@ -39,22 +23,12 @@ const IndexManager = ({ onUrlsChange = () => {} }) => {
       <div>
         <input
           type="text"
-          value={url}
-          onChange={(e) => setUrl(e.target.value)}
-          placeholder="Enter a URL"
+          value={inputUrl}
+          onChange={(e) => setInputUrl(e.target.value)}
+          onKeyPress={handleKeyPress}
+          placeholder="Enter a repository URL"
         />
-        <button onClick={handleAddUrl}>Add repo</button>
-      </div>
-      <div>
-        <h3>Repositories</h3>
-        <ul>
-          {savedUrls.map((savedUrl, index) => (
-            <li key={index}>
-              {savedUrl}{" "}
-              <button onClick={() => handleDeleteUrl(savedUrl)}>Delete</button>
-            </li>
-          ))}
-        </ul>
+        <button onClick={handleAddUrl}>Add Repo</button>
       </div>
     </div>
   );
