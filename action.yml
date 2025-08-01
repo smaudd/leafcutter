@@ -1,0 +1,14 @@
+name: "Leafcutter Indexer"
+description: "Recursively index audio/media folders and generate JSON metadata for Leafcutter"
+inputs:
+  dirname:
+    description: "Directory to index"
+    required: true
+    default: "."
+
+runs:
+  using: "docker"
+  image: "Dockerfile"
+  args:
+    - --dirname
+    - ${{ inputs.dirname }}
