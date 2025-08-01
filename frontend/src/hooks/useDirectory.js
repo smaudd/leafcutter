@@ -1,9 +1,32 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { bridge } from "../services/bridge";
 
-export default function useDirectory() {
+export default function useDirectory(urls) {
   const [trees, setTrees] = useState([]);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      const fetchedTrees = await Promise.all(
+        urls.map((base) => fetchDirectory(`${base}/index.json`, { root: true }))
+      );
+      const formattedTrees = fetchedTrees.map((tree, index) => ({
+        content: {
+          [urls[index]]: {
+            ...tree.content,
+            type: "directory",
+            root: true,
+            directory: urls[index],
+          },
+        },
+        root: true,
+        directory: urls[index],
+        rootDir: urls[index],
+      }));
+
+      setTrees(formattedTrees);
+    })();
+  }, []);
 
   const fetchDirectory = async (pathname) => {
     setLoading(true);

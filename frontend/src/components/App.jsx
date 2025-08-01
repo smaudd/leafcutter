@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import useDirectory from "../hooks/useDirectory";
 import { AudioProvider } from "../context/AudioProvider";
 import StackedTree from "./StackedTree/StackedTree";
@@ -6,41 +6,15 @@ import SearchBar from "./SearchBar/SearchBar";
 import IndexManager from "./IndexManager/IndexManager";
 
 const App = () => {
+  const [urls, setUrls] = useState([
+    "https://raw.githubusercontent.com/smaudd/demos/refs/heads/master/samples",
+    "https://raw.githubusercontent.com/smaudd/909/refs/heads/master",
+  ]);
   const { trees, setTrees, loading, fetchDirectory, removeDirectory } =
-    useDirectory();
-
-  useEffect(() => {
-    (async () => {
-      let dirs = "[]";
-      dirs = [
-        ...JSON.parse(dirs),
-        "https://raw.githubusercontent.com/smaudd/demos/refs/heads/master/samples",
-        "https://raw.githubusercontent.com/smaudd/909/refs/heads/master",
-      ];
-      const fetchedTrees = await Promise.all(
-        dirs.map((base) => fetchDirectory(`${base}/index.json`, { root: true }))
-      );
-      const formattedTrees = fetchedTrees.map((tree, index) => ({
-        content: {
-          [dirs[index]]: {
-            ...tree.content,
-            type: "directory",
-            root: true,
-            directory: dirs[index],
-          },
-        },
-        root: true,
-        directory: dirs[index],
-        rootDir: dirs[index],
-      }));
-
-      setTrees(formattedTrees);
-    })();
-  }, []);
-
+    useDirectory(urls);
   return (
     <AudioProvider>
-      <IndexManager />
+      <IndexManager urls={urls} onUrlsChange={setUrls} />
       <div>
         {trees.map((tree) => (
           <React.Fragment key={tree.directory}>
@@ -56,16 +30,16 @@ const App = () => {
                 setTrees(nextTrees);
               }}
               loading={loading}
-              // parent={tree.parent}
+              parent={tree.parent}
               root={tree?.root}
-              rootDir={tree.rootDir}
+              rootDir={tree.repoLabel || tree.rootDir} // Use clean repo label
               fetchDirectory={fetchDirectory}
             />
             <button
               onClick={() => removeDirectory(tree.directory)}
               data-testid="clear"
             >
-              Delete
+              Delete {tree.repoLabel || tree.directory}
             </button>
           </React.Fragment>
         ))}
