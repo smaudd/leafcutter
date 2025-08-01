@@ -25,7 +25,7 @@ jobs:
       - name: Build binary
         run: |
           mkdir -p dist
-          GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} go build -o dist/indexer-${{ matrix.goos }}-${{ matrix.goarch }} ./scripts/main.go
+          GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} go build -o dist/indexer-${{ matrix.goos }}-${{ matrix.goarch }} ./indexer/main.go
 
       - name: Upload binary
         uses: softprops/action-gh-release@v2
