@@ -75,7 +75,7 @@ func selectFolderPrompt() (string, error) {
 // Create a new IndexingManager
 func NewIndexingManager() *IndexingManager {
 	return &IndexingManager{
-		SupportedFormats: []string{"mp3", "wav", "flac", "ogg", "tiff", "midi"},
+		SupportedFormats: []string{"mp3", "wav", "flac", "ogg", "tiff", "midi", "aif", "aiff"},
 		ExcludedFiles:    []string{".DS_Store"},
 	}
 }
