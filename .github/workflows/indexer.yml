@@ -3,10 +3,10 @@ name: Folder Indexing
 on:
   workflow_call:
      inputs:
-      go-version:
-        description: "Go version"
-        required: false
-        type: string
+       samples:
+         description: 'Path to the samples directory'
+         required: false
+         type: string
 
 permissions:
   contents: write  # Required for auto-committing
@@ -19,23 +19,13 @@ jobs:
       - name: Checkout Repo
         uses: actions/checkout@v3
 
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: ${{ inputs.go-version }}
-
-      - name: Download Go Dependencies
+      - name: Download prebuilt indexer binary
         run: |
-          cd indexer
-          go mod tidy
-
-      - name: Build Indexer
-        run: |
-          cd indexer
-          go build -o ../indexer .
+          curl -L -o indexer https://github.com/smaudd/leafcutter/releases/download/v1.0.0/indexer-linux-amd64
+          chmod +x indexer
 
       - name: Run Indexer
-        run: ./indexer/indexer --dirname ./samples
+        run: ./indexer --dirname ./samples
 
       - name: Commit Indexed Files
         run: |
